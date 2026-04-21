@@ -1,3 +1,9 @@
+# ⚠️ WORK IN PROGRESS ⚠️
+
+> **This resource is actively under development. Features may be incomplete, broken, or subject to change without notice.**
+
+---
+
 # lwk_cad — Police CAD / MDT
 
 A standalone FiveM police CAD/MDT resource with a full database backend and live integration with **Nights Software ERS** (`night_ers`). Officers open a laptop-style MDT overlay to run person/vehicle queries, monitor active units, watch a live dispatch feed, and submit official police reports — all backed by a persistent MySQL database.
