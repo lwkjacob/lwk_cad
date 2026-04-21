@@ -18,6 +18,8 @@ window.addEventListener('message', function(event) {
 
         case 'open':
             if (msg.deptConfig) window.lwkDeptConfig = msg.deptConfig;
+            if (msg.loadingDelayMin !== undefined) window.lwkDelayMin = msg.loadingDelayMin;
+            if (msg.loadingDelayMax !== undefined) window.lwkDelayMax = msg.loadingDelayMax;
             document.getElementById('lwk-laptop').style.display = 'flex';
             if (window.lwkOfficer) {
                 document.querySelector('.app').style.display = 'flex';
@@ -460,8 +462,11 @@ function buildDispatchRow(c) {
 
 // ── Simulated latency helpers ─────────────────────────────────────────────────
 
-function fakeDelay(min, max, cb) {
-    setTimeout(cb, min + Math.floor(Math.random() * (max - min)));
+function fakeDelay(cb) {
+    var lo = (window.lwkDelayMin !== undefined) ? window.lwkDelayMin : 500;
+    var hi = (window.lwkDelayMax !== undefined) ? window.lwkDelayMax : 1000;
+    if (lo === 0 && hi === 0) { cb(); return; }
+    setTimeout(cb, lo + Math.floor(Math.random() * Math.max(1, hi - lo)));
 }
 
 function randomMsg(arr) {
@@ -688,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (hdr) hdr.textContent = 'Searching...';
                 if (rec) rec.innerHTML = lwkLoadingHtml(randomMsg(LWK_QUERY_MSGS));
                 pBtns[0].disabled = true;
-                fakeDelay(500, 1000, function() {
+                fakeDelay(function() {
                     pBtns[0].disabled = false;
                     postToLua('lookupPerson', {
                         lastName:  lastName,
@@ -724,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (hdr) hdr.textContent = 'Searching...';
                 if (rec) rec.innerHTML = lwkLoadingHtml(randomMsg(LWK_QUERY_MSGS));
                 vBtns[0].disabled = true;
-                fakeDelay(500, 1000, function() {
+                fakeDelay(function() {
                     vBtns[0].disabled = false;
                     postToLua('lookupVehicle', { plate: plate });
                 });
@@ -806,7 +811,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 step++;
                 if (step < LWK_LOGIN_MSGS.length && msgEl) msgEl.textContent = LWK_LOGIN_MSGS[step];
             }, 700);
-            fakeDelay(500, 1000, function() {
+            fakeDelay(function() {
                 clearInterval(msgInterval);
                 origDoLogin();
                 var payload = { name: nameVal, callsign: csVal, department: deptVal };
@@ -843,7 +848,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var origBtnText = submitBtn ? submitBtn.textContent : 'Save & Submit ▶';
             if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Transmitting...'; }
 
-            fakeDelay(500, 1000, function() {
+            fakeDelay(function() {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
                 origSaveForm();
                 postToLua('submitReport', {

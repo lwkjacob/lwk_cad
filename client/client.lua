@@ -42,7 +42,13 @@ local function openMDT()
     end
     isOpen = true
     SetNuiFocus(true, true)
-    SendNUIMessage({ action = 'open', officerData = officerData, deptConfig = Config.Departments })
+    SendNUIMessage({
+        action           = 'open',
+        officerData      = officerData,
+        deptConfig       = Config.Departments,
+        loadingDelayMin  = Config.LoadingDelayMin,
+        loadingDelayMax  = Config.LoadingDelayMax
+    })
 end
 
 local function closeMDT()
@@ -54,11 +60,11 @@ end
 
 -- ─── command + keybind ────────────────────────────────────────────────────────
 
-RegisterCommand('mdt', function()
+RegisterCommand(Config.Command, function()
     if isOpen then closeMDT() else openMDT() end
 end, false)
 
-RegisterKeyMapping('mdt', 'Open / Close MDT', 'keyboard', Config.OpenKey)
+RegisterKeyMapping(Config.Command, 'Open / Close MDT', 'keyboard', Config.OpenKey)
 
 -- ─── generic server response handler ─────────────────────────────────────────
 

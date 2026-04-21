@@ -1,23 +1,64 @@
 Config = {}
 
--- Keybind to open/close MDT (default F6)
+-- ─── Controls ────────────────────────────────────────────────────────────────
+
+-- Chat command to toggle the MDT open/close
+Config.Command = 'mdt'
+
+-- Keybind to toggle the MDT (players can rebind in FiveM settings)
 Config.OpenKey = 'F7'
 
--- Only players with these ERS service types can open the MDT
--- ERS service types: "police", "fire", "ambulance", "tow"
+-- ERS service types permitted to open the MDT
+-- Valid values: "police", "fire", "ambulance", "tow"
 Config.AllowedServices = { "police" }
 
--- ACE permission node (optional — set to nil to disable ACE check)
+-- Optional ACE permission node — set to nil to skip the check entirely
 -- Example: "lwk_cad.use"
 Config.AcePermission = nil
 
--- Auto-populate warrant flags for peds with these ERS wanted levels (1–5)
--- Any ped with wantedLevel >= this value gets flagged in the DB
+-- ─── Dispatch ────────────────────────────────────────────────────────────────
+
+-- Keywords that determine call priority (case-insensitive, matched against callout name).
+-- Priority 1 = highest urgency, 4 = lowest. Anything not matched falls back to 4.
+Config.DispatchPriority = {
+    [1] = { 'shooting', 'shots fired', 'robbery', 'hostage', 'fire', 'pursuit', 'explosion', 'officer down', 'active shooter' },
+    [2] = { 'assault', 'disturbance', 'domestic', 'accident', 'crash', 'fight', 'stabbing' },
+    [3] = { 'theft', 'suspicious', 'alarm', 'trespassing', 'vandalism', 'noise complaint' },
+    -- [4] is the automatic fallback — no entry needed
+}
+
+-- Hours before CLOSED/COMPLETED dispatch rows are deleted from the database
+Config.DispatchPurgeHours = 2
+
+-- How often (minutes) stale active-unit rows are cleaned up
+Config.StaleUnitCleanupMinutes = 5
+
+-- Maximum rows returned per query
+Config.MaxPersonResults   = 20
+Config.MaxDispatchResults = 50
+Config.MaxReportResults   = 100
+
+-- ─── Officers ────────────────────────────────────────────────────────────────
+
+-- Default radio status code assigned when an officer goes on shift
+Config.DefaultStatusCode = '10-8'
+
+-- ERS wanted level at or above which a civilian is auto-flagged has_warrant = 1
 Config.WantedLevelWarrantThreshold = 2
 
--- Department display info shown in MDT form headers and the login seal.
--- Keys must match the <option value="..."> in the login dropdown.
--- seal: path relative to ui/ (must also be listed in fxmanifest files{}).
+-- ─── UI / Loading ─────────────────────────────────────────────────────────────
+
+-- Simulated loading delay range (milliseconds) for queries, login, and form submission.
+-- Gives the MDT a realistic "connecting to database" feel.
+-- Set both to 0 to disable entirely.
+Config.LoadingDelayMin = 500
+Config.LoadingDelayMax = 1000
+
+-- ─── Departments ─────────────────────────────────────────────────────────────
+
+-- Display info for each department shown in MDT form headers and the login screen.
+-- Keys must match the <option value="..."> in the login dropdown (ui/index.html.html).
+-- seal: path relative to ui/ — must also appear in fxmanifest.lua files{}.
 Config.Departments = {
     nypd = {
         name = 'NEW YORK POLICE DEPARTMENT',

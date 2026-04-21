@@ -25,17 +25,15 @@ end
 
 local function getCalloutPriority(calloutData)
     local name = string.lower(calloutData.calloutName or calloutData.name or calloutData.title or '')
-    if name:find('shooting') or name:find('robbery') or name:find('hostage')
-       or name:find('fire') or name:find('pursuit') or name:find('shots') then
-        return 1
-    elseif name:find('assault') or name:find('disturbance') or name:find('domestic')
-           or name:find('accident') or name:find('crash') then
-        return 2
-    elseif name:find('theft') or name:find('suspicious') or name:find('alarm') then
-        return 3
-    else
-        return 4
+    for priority = 1, 3 do
+        local keywords = Config.DispatchPriority[priority] or {}
+        for _, kw in ipairs(keywords) do
+            if name:find(string.lower(kw), 1, true) then
+                return priority
+            end
+        end
     end
+    return 4
 end
 
 local function getOfficerCallsign(src)
@@ -339,20 +337,21 @@ AddEventHandler('ErsIntegration::OnToggleShift', function(playerSrc, isOnShift, 
                 MySQL.query.await([[
                     INSERT INTO lwk_active_units
                         (source_id, officer_name, callsign, department, service_type, status_code)
-                    VALUES (?, ?, ?, ?, ?, '10-8')
+                    VALUES (?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
                         officer_name   = VALUES(officer_name),
                         callsign       = VALUES(callsign),
                         department     = VALUES(department),
                         service_type   = VALUES(service_type),
-                        status_code    = '10-8',
+                        status_code    = VALUES(status_code),
                         on_shift_since = CURRENT_TIMESTAMP
                 ]], {
                     tonumber(playerSrc),
                     info.name or ('OFFICER-' .. tostring(playerSrc)),
                     info.callsign or ('UNIT-' .. tostring(playerSrc)),
                     info.department or safeStr(serviceType or 'police'),
-                    safeStr(serviceType or 'police')
+                    safeStr(serviceType or 'police'),
+                    Config.DefaultStatusCode
                 })
             end)
             if not ok then
@@ -364,7 +363,7 @@ AddEventHandler('ErsIntegration::OnToggleShift', function(playerSrc, isOnShift, 
                 callsign     = info.callsign or '',
                 department   = info.department or '',
                 service_type = safeStr(serviceType or 'police'),
-                status_code  = '10-8'
+                status_code  = Config.DefaultStatusCode
             }
             TriggerClientEvent('lwk_cad:pushUnitUpdate', -1, unit)
         end)
@@ -421,7 +420,7 @@ AddEventHandler('lwk_cad:lookupPerson', function(data, requestId)
         if #where > 0 then
             sql = sql .. ' WHERE ' .. table.concat(where, ' AND ')
         end
-        sql = sql .. ' LIMIT 20'
+        sql = sql .. ' LIMIT ' .. tostring(Config.MaxPersonResults)
         local results = MySQL.query.await(sql, params)
         if not results or #results == 0 then
             TriggerClientEvent('lwk_cad:response', src, requestId, { found = false })
@@ -469,7 +468,7 @@ AddEventHandler('lwk_cad:getDispatchFeed', function(data, requestId)
     if not requestId then return end
     CreateThread(function()
         local results = MySQL.query.await(
-            "SELECT * FROM lwk_dispatch WHERE status IN ('PENDING','ACTIVE','ON SCENE') ORDER BY priority ASC, created_at DESC LIMIT 50",
+            "SELECT * FROM lwk_dispatch WHERE status IN ('PENDING','ACTIVE','ON SCENE') ORDER BY priority ASC, created_at DESC LIMIT " .. tostring(Config.MaxDispatchResults),
             {}
         )
         TriggerClientEvent('lwk_cad:response', src, requestId, { calls = results or {} })
@@ -523,7 +522,7 @@ AddEventHandler('lwk_cad:getReports', function(data, requestId)
         if #where > 0 then
             sql = sql .. ' WHERE ' .. table.concat(where, ' AND ')
         end
-        sql = sql .. ' ORDER BY created_at DESC LIMIT 100'
+        sql = sql .. ' ORDER BY created_at DESC LIMIT ' .. tostring(Config.MaxReportResults)
         local results = MySQL.query.await(sql, params)
         TriggerClientEvent('lwk_cad:response', src, requestId, { reports = results or {} })
     end)
@@ -552,7 +551,7 @@ AddEventHandler('lwk_cad:updateUnitStatus', function(data, requestId)
             MySQL.query.await(
                 'UPDATE lwk_active_units SET status_code = ?, location = ?, assignment = ? WHERE source_id = ?',
                 {
-                    safeStr(data.statusCode or '10-8'),
+                    safeStr(data.statusCode or Config.DefaultStatusCode),
                     safeStr(data.location),
                     safeStr(data.assignment),
                     tonumber(src)
@@ -567,7 +566,7 @@ AddEventHandler('lwk_cad:updateUnitStatus', function(data, requestId)
         end
         local unit = {
             source_id   = tonumber(src),
-            status_code = safeStr(data.statusCode or '10-8'),
+            status_code = safeStr(data.statusCode or Config.DefaultStatusCode),
             location    = safeStr(data.location),
             assignment  = safeStr(data.assignment)
         }
@@ -579,9 +578,9 @@ end)
 
 CreateThread(function()
     while true do
-        Wait(300000) -- every 5 minutes
+        Wait(Config.StaleUnitCleanupMinutes * 60000)
         MySQL.query(
-            "DELETE FROM lwk_dispatch WHERE status IN ('CLOSED','COMPLETED') AND updated_at < NOW() - INTERVAL 2 HOUR"
+            "DELETE FROM lwk_dispatch WHERE status IN ('CLOSED','COMPLETED') AND updated_at < NOW() - INTERVAL " .. tostring(Config.DispatchPurgeHours) .. " HOUR"
         )
         cleanStaleUnits()
     end
