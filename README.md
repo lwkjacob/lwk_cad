@@ -170,4 +170,4 @@ lwk_cad/
 
 ## License
 
-Internal use — LWK server.
+MIT License — Copyright (c) 2026 lwkjacob. See [LICENSE](LICENSE) for full terms.
