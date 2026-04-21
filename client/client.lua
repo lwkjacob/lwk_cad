@@ -1,0 +1,152 @@
+local isOpen    = false
+local isLoggedIn = false
+local officerData = nil
+
+-- pending server requests keyed by requestId → { action = 'nuiAction' }
+local pendingRequests = {}
+
+-- ─── permission check ─────────────────────────────────────────────────────────
+
+local function canOpenMDT()
+    -- ACE permission gate (optional)
+    if Config.AcePermission then
+        if not IsPlayerAceAllowed(PlayerId(), Config.AcePermission) then
+            return false
+        end
+    end
+
+    -- ERS service type gate
+    local ok, serviceType = pcall(function()
+        return exports['night_ers']:getPlayerActiveServiceType()
+    end)
+    if ok and serviceType then
+        for _, allowed in ipairs(Config.AllowedServices) do
+            if string.lower(tostring(serviceType)) == string.lower(allowed) then
+                return true
+            end
+        end
+        return false
+    end
+
+    -- If ERS export unavailable, allow access (solo testing / ERS not running)
+    return true
+end
+
+-- ─── open / close ─────────────────────────────────────────────────────────────
+
+local function openMDT()
+    if isOpen then return end
+    if not canOpenMDT() then
+        -- silent fail — officer not on an allowed service
+        return
+    end
+    isOpen = true
+    SetNuiFocus(true, true)
+    SendNUIMessage({ action = 'open', officerData = officerData })
+end
+
+local function closeMDT()
+    if not isOpen then return end
+    isOpen = false
+    SetNuiFocus(false, false)
+    SendNUIMessage({ action = 'close' })
+end
+
+-- ─── command + keybind ────────────────────────────────────────────────────────
+
+RegisterCommand('mdt', function()
+    if isOpen then closeMDT() else openMDT() end
+end, false)
+
+RegisterKeyMapping('mdt', 'Open / Close MDT', 'keyboard', Config.OpenKey)
+
+-- ─── generic server response handler ─────────────────────────────────────────
+
+RegisterNetEvent('lwk_cad:response')
+AddEventHandler('lwk_cad:response', function(requestId, data)
+    local pending = pendingRequests[requestId]
+    if not pending then return end
+    pendingRequests[requestId] = nil
+    SendNUIMessage({ action = pending.action, data = data })
+end)
+
+-- ─── live push handlers ───────────────────────────────────────────────────────
+
+RegisterNetEvent('lwk_cad:pushDispatch')
+AddEventHandler('lwk_cad:pushDispatch', function(dispatchRow)
+    if isOpen then
+        SendNUIMessage({ action = 'dispatchPush', data = dispatchRow })
+    end
+end)
+
+RegisterNetEvent('lwk_cad:pushUnitUpdate')
+AddEventHandler('lwk_cad:pushUnitUpdate', function(unitRow)
+    if isOpen then
+        SendNUIMessage({ action = 'unitUpdate', data = unitRow })
+    end
+end)
+
+-- ─── NUI callbacks ────────────────────────────────────────────────────────────
+
+RegisterNUICallback('officerLogin', function(data, cb)
+    if not data or not data.name or data.name == '' then
+        cb({ ok = false })
+        return
+    end
+    officerData = {
+        name       = data.name,
+        callsign   = data.callsign or '',
+        department = data.department or ''
+    }
+    isLoggedIn = true
+    TriggerServerEvent('lwk_cad:setOfficerInfo', officerData)
+    -- loginSuccess is handled by nui.js patch on doLogin(); no push needed here
+    cb({ ok = true })
+end)
+
+RegisterNUICallback('lookupPerson', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'personResult' }
+    TriggerServerEvent('lwk_cad:lookupPerson', data, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('lookupVehicle', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'vehicleResult' }
+    TriggerServerEvent('lwk_cad:lookupVehicle', data, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('getActiveUnits', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'unitsResult' }
+    TriggerServerEvent('lwk_cad:getActiveUnits', data or {}, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('getDispatchFeed', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'dispatchResult' }
+    TriggerServerEvent('lwk_cad:getDispatchFeed', data or {}, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('submitReport', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'reportSaved' }
+    TriggerServerEvent('lwk_cad:submitReport', data, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('updateStatus', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'statusUpdated' }
+    TriggerServerEvent('lwk_cad:updateUnitStatus', data, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('closeNUI', function(data, cb)
+    cb({})
+    closeMDT()
+end)
