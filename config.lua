@@ -14,3 +14,19 @@ Config.AcePermission = nil
 -- Auto-populate warrant flags for peds with these ERS wanted levels (1–5)
 -- Any ped with wantedLevel >= this value gets flagged in the DB
 Config.WantedLevelWarrantThreshold = 2
+
+-- Department display info shown in MDT form headers and the login seal.
+-- Keys must match the <option value="..."> in the login dropdown.
+-- seal: path relative to ui/ (must also be listed in fxmanifest files{}).
+Config.Departments = {
+    nypd = {
+        name = 'NEW YORK POLICE DEPARTMENT',
+        sub  = 'New York · Manhattan Division · NYPD',
+        seal = 'images/nypd_logo.png'
+    },
+    nysp = {
+        name = 'NEW YORK STATE POLICE',
+        sub  = 'New York State · Troop NYC · NYSP',
+        seal = 'images/nysp_logo.png'
+    }
+}

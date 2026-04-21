@@ -505,6 +505,44 @@ AddEventHandler('lwk_cad:submitReport', function(data, requestId)
     end)
 end)
 
+RegisterNetEvent('lwk_cad:getReports')
+AddEventHandler('lwk_cad:getReports', function(data, requestId)
+    local src = source
+    if not requestId then return end
+    CreateThread(function()
+        local where, params = {}, {}
+        if data and data.reportType and data.reportType ~= '' then
+            where[#where + 1] = 'report_type = ?'
+            params[#params + 1] = data.reportType
+        end
+        if data and data.officerName and data.officerName ~= '' then
+            where[#where + 1] = 'LOWER(officer_name) LIKE LOWER(?)'
+            params[#params + 1] = '%' .. data.officerName .. '%'
+        end
+        local sql = 'SELECT id, report_number, report_type, officer_name, callsign, subject_name, plate, created_at FROM lwk_reports'
+        if #where > 0 then
+            sql = sql .. ' WHERE ' .. table.concat(where, ' AND ')
+        end
+        sql = sql .. ' ORDER BY created_at DESC LIMIT 100'
+        local results = MySQL.query.await(sql, params)
+        TriggerClientEvent('lwk_cad:response', src, requestId, { reports = results or {} })
+    end)
+end)
+
+RegisterNetEvent('lwk_cad:getReportDetail')
+AddEventHandler('lwk_cad:getReportDetail', function(data, requestId)
+    local src = source
+    if not data or not data.id or not requestId then return end
+    CreateThread(function()
+        local results = MySQL.query.await('SELECT * FROM lwk_reports WHERE id = ? LIMIT 1', { tonumber(data.id) })
+        if results and #results > 0 then
+            TriggerClientEvent('lwk_cad:response', src, requestId, { found = true, report = results[1] })
+        else
+            TriggerClientEvent('lwk_cad:response', src, requestId, { found = false })
+        end
+    end)
+end)
+
 RegisterNetEvent('lwk_cad:updateUnitStatus')
 AddEventHandler('lwk_cad:updateUnitStatus', function(data, requestId)
     local src = source

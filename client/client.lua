@@ -42,7 +42,7 @@ local function openMDT()
     end
     isOpen = true
     SetNuiFocus(true, true)
-    SendNUIMessage({ action = 'open', officerData = officerData })
+    SendNUIMessage({ action = 'open', officerData = officerData, deptConfig = Config.Departments })
 end
 
 local function closeMDT()
@@ -136,6 +136,20 @@ RegisterNUICallback('submitReport', function(data, cb)
     local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
     pendingRequests[requestId] = { action = 'reportSaved' }
     TriggerServerEvent('lwk_cad:submitReport', data, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('getReports', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'reportsResult' }
+    TriggerServerEvent('lwk_cad:getReports', data or {}, requestId)
+    cb({})
+end)
+
+RegisterNUICallback('getReportDetail', function(data, cb)
+    local requestId = tostring(GetGameTimer()) .. '_' .. tostring(math.random(10000, 99999))
+    pendingRequests[requestId] = { action = 'reportDetailResult' }
+    TriggerServerEvent('lwk_cad:getReportDetail', data or {}, requestId)
     cb({})
 end)
 

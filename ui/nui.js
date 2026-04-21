@@ -17,6 +17,7 @@ window.addEventListener('message', function(event) {
     switch (msg.action) {
 
         case 'open':
+            if (msg.deptConfig) window.lwkDeptConfig = msg.deptConfig;
             document.getElementById('lwk-laptop').style.display = 'flex';
             if (window.lwkOfficer) {
                 document.querySelector('.app').style.display = 'flex';
@@ -66,6 +67,14 @@ window.addEventListener('message', function(event) {
             applyUnitUpdate(msg.data);
             break;
 
+        case 'reportsResult':
+            renderReportsList(msg.data && msg.data.reports);
+            break;
+
+        case 'reportDetailResult':
+            renderReportDetail(msg.data);
+            break;
+
         case 'reportSaved':
             window.dispatchEvent(new CustomEvent('lwk:reportSaved', { detail: msg.data }));
             if (msg.data && msg.data.success) {
@@ -89,6 +98,90 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ── Render helpers ────────────────────────────────────────────────────────────
+
+function applyDeptToForms(deptKey) {
+    var depts = window.lwkDeptConfig || {};
+    var d = depts[deptKey];
+    if (!d) return;
+    document.querySelectorAll('.ag-name').forEach(function(el) { el.textContent = d.name; });
+    document.querySelectorAll('.ag-sub').forEach(function(el)  { el.textContent = d.sub;  });
+    if (d.seal) {
+        document.querySelectorAll('.doc-seal').forEach(function(el) {
+            el.innerHTML = '<img src="' + d.seal + '" style="width:54px;height:54px;object-fit:contain">';
+        });
+    }
+}
+
+function renderReportsList(reports) {
+    var listEl = document.getElementById('rpt-list-view');
+    var detailEl = document.getElementById('rpt-detail-view');
+    if (!listEl) return;
+    if (detailEl) { detailEl.style.display = 'none'; listEl.style.display = 'block'; }
+
+    if (!reports || reports.length === 0) {
+        listEl.innerHTML = '<div style="padding:20px;color:#888;text-align:center">No saved reports found.</div>';
+        return;
+    }
+
+    var html = '<table class="grid g-disp" style="width:100%"><thead><tr>'
+        + '<th>Rpt #</th><th>Type</th><th>Officer</th><th>Callsign</th><th>Subject</th><th>Date</th><th></th>'
+        + '</tr></thead><tbody>';
+    reports.forEach(function(r) {
+        var dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString() : '—';
+        html += '<tr>'
+            + '<td class="c-blue">' + esc(r.report_number) + '</td>'
+            + '<td>' + esc(r.report_type) + '</td>'
+            + '<td>' + esc(r.officer_name) + '</td>'
+            + '<td>' + esc(r.callsign) + '</td>'
+            + '<td>' + esc(r.subject_name || '—') + '</td>'
+            + '<td>' + dateStr + '</td>'
+            + '<td><button class="fbtn" data-rpt-id="' + r.id + '">View</button></td>'
+            + '</tr>';
+    });
+    html += '</tbody></table>';
+    listEl.innerHTML = html;
+
+    listEl.querySelectorAll('[data-rpt-id]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            postToLua('getReportDetail', { id: parseInt(btn.dataset.rptId) });
+        });
+    });
+}
+
+function renderReportDetail(data) {
+    var listEl   = document.getElementById('rpt-list-view');
+    var detailEl = document.getElementById('rpt-detail-view');
+    var contentEl = document.getElementById('rpt-detail-content');
+    if (!detailEl || !contentEl) return;
+
+    if (!data || !data.found) {
+        contentEl.innerHTML = '<div style="padding:20px;color:#888">Report not found.</div>';
+    } else {
+        var r = data.report;
+        var fields = {};
+        try { fields = JSON.parse(r.content_json || '{}'); } catch(e) {}
+
+        var rows = '';
+        Object.keys(fields).forEach(function(k) {
+            if (fields[k] && fields[k] !== '') {
+                rows += '<tr><td style="font-weight:600;padding:3px 8px;white-space:nowrap;color:#444">' + esc(k) + '</td>'
+                    + '<td style="padding:3px 8px">' + esc(fields[k]) + '</td></tr>';
+            }
+        });
+
+        contentEl.innerHTML = '<div style="padding:8px 10px;background:#f4f6fa;border-bottom:1px solid #ccc;margin-bottom:8px">'
+            + '<span style="font-weight:700;font-size:12px">' + esc(r.report_type) + '</span>'
+            + ' &nbsp;·&nbsp; Rpt #: <strong>' + esc(r.report_number) + '</strong>'
+            + ' &nbsp;·&nbsp; Officer: ' + esc(r.officer_name) + ' (' + esc(r.callsign) + ')'
+            + (r.subject_name ? ' &nbsp;·&nbsp; Subject: ' + esc(r.subject_name) : '')
+            + '</div>'
+            + (rows ? '<table style="width:100%;border-collapse:collapse;font-size:11px">' + rows + '</table>'
+                    : '<div style="padding:12px;color:#888">No field data recorded.</div>');
+    }
+
+    if (listEl) listEl.style.display = 'none';
+    detailEl.style.display = 'flex';
+}
 
 function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -159,7 +252,6 @@ function renderPersonResult(data) {
             +   '<div class="rec-name">' + esc(r.last_name) + ', ' + esc(r.first_name) + '</div>'
             +   '<div class="rec-sub">DOB: ' + esc(r.dob) + ' · ' + esc(r.gender)
             +   (raw.Nationality ? ' · ' + esc(raw.Nationality) : '')
-            +   (raw.BehaviourState && raw.BehaviourState.label ? ' · ' + esc(raw.BehaviourState.label) : '')
             +   '</div>'
             +   (flagBadges   ? '<div class="flags">' + flagBadges + '</div>' : '')
             +   (medical.length ? '<div class="flags">' + medical.join(' ') + '</div>' : '')
@@ -366,6 +458,24 @@ function buildDispatchRow(c) {
         + '</tr>';
 }
 
+// ── Simulated latency helpers ─────────────────────────────────────────────────
+
+function fakeDelay(min, max, cb) {
+    setTimeout(cb, min + Math.floor(Math.random() * (max - min)));
+}
+
+function randomMsg(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function lwkLoadingHtml(msg) {
+    return '<div class="lwk-loading"><div class="lwk-spinner"></div><span>' + esc(msg) + '</span></div>';
+}
+
+var LWK_QUERY_MSGS  = ['Querying database...', 'Searching records...', 'Connecting to NCIC...', 'Retrieving data...'];
+var LWK_SUBMIT_MSGS = ['Transmitting report...', 'Uploading to database...', 'Saving record...'];
+var LWK_LOGIN_MSGS  = ['Authenticating credentials...', 'Verifying department access...', 'Establishing secure session...'];
+
 // ── DOMContentLoaded — wire all interactive elements ─────────────────────────
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -417,9 +527,17 @@ document.addEventListener('DOMContentLoaded', function() {
         '  border:1px solid #2e2e2e;',
         '}',
 
+        /* loading spinner */
+        '@keyframes lwk-spin{to{transform:rotate(360deg)}}',
+        '.lwk-spinner{width:14px;height:14px;border:2px solid #c0cce0;border-top-color:#285e8e;border-radius:50%;animation:lwk-spin .65s linear infinite;flex-shrink:0}',
+        '.lwk-loading{display:flex;align-items:center;gap:10px;padding:24px 20px;color:#555;font-size:11px;justify-content:center}',
+
         /* override login-screen and .app to fill #lwk-screen, not the viewport */
         '#login-screen{position:absolute!important;inset:0!important;}',
         '.app{width:100%!important;height:100%!important;}',
+
+        /* fix department select clipping */
+        '.login-field select{height:auto!important;min-height:26px!important;padding:4px 6px!important;line-height:normal!important;}',
     ].join('');
     document.head.appendChild(style);
 
@@ -442,6 +560,14 @@ document.addEventListener('DOMContentLoaded', function() {
     laptop.appendChild(lid);
     laptop.appendChild(base);
     document.body.appendChild(laptop);
+
+    // Login loading overlay
+    var loginOverlay = document.createElement('div');
+    loginOverlay.id = 'login-loading';
+    loginOverlay.style.cssText = 'display:none;position:absolute;inset:0;background:rgba(240,244,252,0.94);z-index:20;align-items:center;justify-content:center;flex-direction:column;gap:10px';
+    loginOverlay.innerHTML = '<div class="lwk-spinner" style="width:20px;height:20px;border-width:3px"></div>'
+        + '<div id="login-load-msg" style="font-size:11px;font-weight:600;color:#1a3a6e;letter-spacing:.03em">Authenticating...</div>';
+    loginScreen.appendChild(loginOverlay);
 
     // Hide everything on load
     loginScreen.style.display = 'none';
@@ -468,6 +594,84 @@ document.addEventListener('DOMContentLoaded', function() {
     var dispatchCount = document.querySelector('#tab-dispatch .panel-hdr span[style*="color:#555"]');
     if (dispatchCount) dispatchCount.textContent = '';
 
+    // ── remove LSPDN network indicator and "Source:" labels ──────────────────
+    var netSpan = document.querySelector('.net');
+    if (netSpan) netSpan.remove();
+    document.querySelectorAll('.panel-hdr .lbl').forEach(function(el) {
+        if (el.textContent.indexOf('LSPDN') !== -1 || el.textContent.indexOf('SA-DMV') !== -1) {
+            el.remove();
+        }
+    });
+
+    // ── fix citation form header text ─────────────────────────────────────────
+    var citAgForm = document.querySelector('#f-citation .ag-form');
+    if (citAgForm) citAgForm.textContent = 'TRAFFIC CITATION';
+
+    // ── inject Saved Reports sidebar button ───────────────────────────────────
+    var sidebar = document.querySelector('.form-sidebar');
+    if (sidebar) {
+        var sep = document.createElement('div');
+        sep.style.cssText = 'height:1px;background:#444;margin:6px 0';
+        var rptHdr = document.createElement('div');
+        rptHdr.className = 'fs-hdr';
+        rptHdr.textContent = 'Records';
+        var rptBtn = document.createElement('button');
+        rptBtn.className = 'fs-btn';
+        rptBtn.id = 'btn-saved-reports';
+        rptBtn.textContent = 'Saved Reports';
+        sidebar.appendChild(sep);
+        sidebar.appendChild(rptHdr);
+        sidebar.appendChild(rptBtn);
+    }
+
+    // ── inject Saved Reports panel into form-main ────────────────────────────
+    var formMain = document.querySelector('.form-main');
+    if (formMain) {
+        var rptPanel = document.createElement('div');
+        rptPanel.id = 'form-reports';
+        rptPanel.style.cssText = 'display:none;flex-direction:column;flex:1;min-height:0';
+        rptPanel.innerHTML = ''
+            + '<div class="form-toolbar">'
+            +   '<span class="ft-title">Saved Reports</span>'
+            +   '<span class="sp"></span>'
+            +   '<button class="fbtn" id="rpt-refresh-btn">↻ Refresh</button>'
+            + '</div>'
+            + '<div id="rpt-list-view" style="overflow-y:auto;flex:1;padding:8px"></div>'
+            + '<div id="rpt-detail-view" style="display:none;flex-direction:column;flex:1;min-height:0">'
+            +   '<div style="padding:4px 8px;border-bottom:1px solid #ccc">'
+            +     '<button class="fbtn" id="rpt-back-btn">← Back to List</button>'
+            +   '</div>'
+            +   '<div id="rpt-detail-content" style="overflow-y:auto;flex:1;padding:4px 0"></div>'
+            + '</div>';
+        formMain.appendChild(rptPanel);
+
+        // wire up Saved Reports sidebar button
+        var btnSaved = document.getElementById('btn-saved-reports');
+        if (btnSaved) {
+            btnSaved.addEventListener('click', function() {
+                document.querySelectorAll('.fs-btn').forEach(function(b) { b.classList.remove('active'); });
+                btnSaved.classList.add('active');
+                document.getElementById('form-no-sel').style.display = 'none';
+                document.getElementById('form-area').style.display   = 'none';
+                rptPanel.style.display = 'flex';
+                postToLua('getReports', {});
+            });
+        }
+
+        // wire up Refresh button
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'rpt-refresh-btn') {
+                postToLua('getReports', {});
+            }
+            if (e.target && e.target.id === 'rpt-back-btn') {
+                var listEl   = document.getElementById('rpt-list-view');
+                var detailEl = document.getElementById('rpt-detail-view');
+                if (listEl)   listEl.style.display   = 'block';
+                if (detailEl) detailEl.style.display  = 'none';
+            }
+        });
+    }
+
     // ── person search ─────────────────────────────────────────────────────────
     var personBar = document.querySelector('#tab-person .search-bar');
     if (personBar) {
@@ -476,10 +680,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (pBtns[0]) {
             pBtns[0].addEventListener('click', function() {
-                postToLua('lookupPerson', {
-                    lastName:  (pInputs[0] && pInputs[0].value.trim()) || '',
-                    firstName: (pInputs[1] && pInputs[1].value.trim()) || '',
-                    dob:       (pInputs[2] && pInputs[2].value.trim()) || ''
+                var lastName  = (pInputs[0] && pInputs[0].value.trim()) || '';
+                var firstName = (pInputs[1] && pInputs[1].value.trim()) || '';
+                if (!lastName && !firstName) return;
+                var rec = document.querySelector('#tab-person .panel:nth-child(2) .record');
+                var hdr = document.querySelector('#tab-person .panel:nth-child(2) .ph-title');
+                if (hdr) hdr.textContent = 'Searching...';
+                if (rec) rec.innerHTML = lwkLoadingHtml(randomMsg(LWK_QUERY_MSGS));
+                pBtns[0].disabled = true;
+                fakeDelay(500, 1000, function() {
+                    pBtns[0].disabled = false;
+                    postToLua('lookupPerson', {
+                        lastName:  lastName,
+                        firstName: firstName,
+                        dob:       (pInputs[2] && pInputs[2].value.trim()) || ''
+                    });
                 });
             });
         }
@@ -502,8 +717,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (vBtns[0]) {
             vBtns[0].addEventListener('click', function() {
-                postToLua('lookupVehicle', {
-                    plate: (vPlate && vPlate.value.trim().toUpperCase()) || ''
+                var plate = (vPlate && vPlate.value.trim().toUpperCase()) || '';
+                if (!plate) return;
+                var rec = document.querySelector('#tab-vehicle .panel:nth-child(2) .record');
+                var hdr = document.querySelector('#tab-vehicle .panel:nth-child(2) .ph-title');
+                if (hdr) hdr.textContent = 'Searching...';
+                if (rec) rec.innerHTML = lwkLoadingHtml(randomMsg(LWK_QUERY_MSGS));
+                vBtns[0].disabled = true;
+                fakeDelay(500, 1000, function() {
+                    vBtns[0].disabled = false;
+                    postToLua('lookupVehicle', { plate: plate });
                 });
             });
         }
@@ -525,6 +748,16 @@ document.addEventListener('DOMContentLoaded', function() {
             origSwitchTab(name, btn);
             if (name === 'units')    postToLua('getActiveUnits', {});
             if (name === 'dispatch') postToLua('getDispatchFeed', {});
+        };
+    }
+
+    // ── patch selectForm to hide the reports panel when a form type is picked ─
+    var origSelectForm = window.selectForm;
+    if (origSelectForm) {
+        window.selectForm = function(key, btn) {
+            origSelectForm(key, btn);
+            var rptPanel = document.getElementById('form-reports');
+            if (rptPanel) rptPanel.style.display = 'none';
         };
     }
 
@@ -556,18 +789,31 @@ document.addEventListener('DOMContentLoaded', function() {
     var origDoLogin = window.doLogin;
     if (origDoLogin) {
         window.doLogin = function() {
-            origDoLogin();
-            var dept = document.getElementById('login-dept');
-            var name = document.getElementById('login-name');
-            var cs   = document.getElementById('login-callsign');
-            var deptVal = dept && dept.value;
-            var nameVal = name && name.value.trim();
-            var csVal   = cs   && cs.value.trim();
-            if (deptVal && nameVal && csVal) {
+            var deptVal = (document.getElementById('login-dept')     || {}).value        || '';
+            var nameVal = (document.getElementById('login-name')     || {}).value.trim() || '';
+            var csVal   = (document.getElementById('login-callsign') || {}).value.trim() || '';
+            if (!deptVal || !nameVal || !csVal) {
+                origDoLogin(); // show validation error immediately
+                return;
+            }
+            // show loading overlay and cycle messages
+            var overlay = document.getElementById('login-loading');
+            var msgEl   = document.getElementById('login-load-msg');
+            if (overlay) overlay.style.display = 'flex';
+            var step = 0;
+            if (msgEl) msgEl.textContent = LWK_LOGIN_MSGS[0];
+            var msgInterval = setInterval(function() {
+                step++;
+                if (step < LWK_LOGIN_MSGS.length && msgEl) msgEl.textContent = LWK_LOGIN_MSGS[step];
+            }, 700);
+            fakeDelay(500, 1000, function() {
+                clearInterval(msgInterval);
+                origDoLogin();
                 var payload = { name: nameVal, callsign: csVal, department: deptVal };
                 window.lwkOfficer = payload;
                 postToLua('officerLogin', payload);
-            }
+                applyDeptToForms(deptVal);
+            });
         };
     }
 
@@ -575,31 +821,40 @@ document.addEventListener('DOMContentLoaded', function() {
     var origSaveForm = window.saveForm;
     if (origSaveForm) {
         window.saveForm = function() {
-            origSaveForm();
             var activeDoc = document.querySelector('.f-doc[style*="block"]');
             if (!activeDoc) return;
 
+            // snapshot form values immediately before any delay
             var rptNum    = (document.getElementById('form-rpt') || {}).textContent || '';
             var activeBtn = document.querySelector('.fs-btn.active');
-            var rptType   = activeBtn ? activeBtn.textContent : '';
+            var rptType   = activeBtn ? activeBtn.textContent.trim() : '';
             var officer   = window.lwkOfficer || {};
-
-            // Collect all text inputs as a flat JSON blob
-            var formData = {};
+            var formData  = {};
             activeDoc.querySelectorAll('input[type=text], textarea').forEach(function(el, i) {
                 var label = el.closest('.field, td');
                 var lbl = label ? (label.querySelector('label,.fl') || {}).textContent : null;
                 formData[lbl || ('field_' + i)] = el.value;
             });
 
-            postToLua('submitReport', {
-                reportType:  rptType,
-                reportNumber: rptNum,
-                officerName: officer.name || '',
-                callsign:    officer.callsign || '',
-                subjectName: '',
-                plate:       '',
-                contentJson: JSON.stringify(formData)
+            // show transmitting state
+            var st = document.getElementById('form-status');
+            if (st) { st.className = 'form-status ok'; st.textContent = randomMsg(LWK_SUBMIT_MSGS); }
+            var submitBtn = document.querySelector('#form-area .fbtn.primary');
+            var origBtnText = submitBtn ? submitBtn.textContent : 'Save & Submit ▶';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Transmitting...'; }
+
+            fakeDelay(500, 1000, function() {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
+                origSaveForm();
+                postToLua('submitReport', {
+                    reportType:   rptType,
+                    reportNumber: rptNum,
+                    officerName:  officer.name || '',
+                    callsign:     officer.callsign || '',
+                    subjectName:  '',
+                    plate:        '',
+                    contentJson:  JSON.stringify(formData)
+                });
             });
         };
     }
