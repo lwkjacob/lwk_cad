@@ -543,6 +543,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         /* fix department select clipping */
         '.login-field select{height:auto!important;min-height:26px!important;padding:4px 6px!important;line-height:normal!important;}',
+
+        /* auto-uppercase person and vehicle search inputs */
+        '#tab-person .search-bar .field input,#tab-vehicle .search-bar .field input{text-transform:uppercase;}',
     ].join('');
     document.head.appendChild(style);
 
@@ -685,8 +688,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (pBtns[0]) {
             pBtns[0].addEventListener('click', function() {
-                var lastName  = (pInputs[0] && pInputs[0].value.trim()) || '';
-                var firstName = (pInputs[1] && pInputs[1].value.trim()) || '';
+                var lastName  = ((pInputs[0] && pInputs[0].value.trim()) || '').toUpperCase();
+                var firstName = ((pInputs[1] && pInputs[1].value.trim()) || '').toUpperCase();
                 if (!lastName && !firstName) return;
                 var rec = document.querySelector('#tab-person .panel:nth-child(2) .record');
                 var hdr = document.querySelector('#tab-person .panel:nth-child(2) .ph-title');
