@@ -16,6 +16,9 @@ Config.AllowedServices = { "police" }
 -- Example: "lwk_cad.use"
 Config.AcePermission = nil
 
+-- ACE permission required to clear any officer's active dispatch call
+Config.AdminAce = 'group.admin'
+
 -- ─── Dispatch ────────────────────────────────────────────────────────────────
 
 -- Keywords that determine call priority (case-insensitive, matched against callout name).

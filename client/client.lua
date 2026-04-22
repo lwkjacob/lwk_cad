@@ -166,6 +166,11 @@ RegisterNUICallback('updateStatus', function(data, cb)
     cb({})
 end)
 
+RegisterNUICallback('clearDispatch', function(data, cb)
+    TriggerServerEvent('lwk_cad:clearDispatch', data)
+    cb({})
+end)
+
 RegisterNUICallback('closeNUI', function(data, cb)
     cb({})
     closeMDT()

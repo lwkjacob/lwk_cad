@@ -24,7 +24,7 @@ local function genEventNumber()
 end
 
 local function getCalloutPriority(calloutData)
-    local name = string.lower(calloutData.calloutName or calloutData.name or calloutData.title or '')
+    local name = string.lower(calloutData.CalloutName or calloutData.calloutId or calloutData.calloutName or '')
     for priority = 1, 3 do
         local keywords = Config.DispatchPriority[priority] or {}
         for _, kw in ipairs(keywords) do
@@ -135,8 +135,21 @@ end
 
 local function upsertVehicle(vehicleData)
     if not vehicleData then return end
-    local plate = safeStr(vehicleData.plate)
+    local plate = safeStr(vehicleData.license_plate)
     if plate == '' then return end
+
+    -- split "Firstname Lastname" into two columns
+    local ownerName  = safeStr(vehicleData.owner_name)
+    local ownerFirst, ownerLast = '', ownerName
+    local sp = ownerName:find(' ')
+    if sp then ownerFirst = ownerName:sub(1, sp - 1); ownerLast = ownerName:sub(sp + 1) end
+
+    -- mot = roadworthy, tax = taxed — both must be true for VALID registration
+    local regStatus = (vehicleData.mot and vehicleData.tax) and 'VALID'
+                      or (not vehicleData.mot)              and 'UNROADWORTHY'
+                      or 'UNTAXED'
+    local insStatus = vehicleData.insurance and 'VALID' or 'UNINSURED'
+
     CreateThread(function()
         local ok, err = pcall(function()
             MySQL.query.await([[
@@ -151,7 +164,6 @@ local function upsertVehicle(vehicleData)
                     year        = VALUES(year),
                     owner_first = VALUES(owner_first),
                     owner_last  = VALUES(owner_last),
-                    owner_dl    = VALUES(owner_dl),
                     reg_status  = VALUES(reg_status),
                     ins_status  = VALUES(ins_status),
                     stolen      = VALUES(stolen)
@@ -160,13 +172,13 @@ local function upsertVehicle(vehicleData)
                 safeStr(vehicleData.model),
                 safeStr(vehicleData.make),
                 safeStr(vehicleData.color),
-                safeStr(vehicleData.year),
-                safeStr(vehicleData.ownerFirstName),
-                safeStr(vehicleData.ownerLastName),
-                safeStr(vehicleData.ownerDriverLicenseNumber),
-                safeStr(vehicleData.registrationStatus or 'VALID'),
-                safeStr(vehicleData.insuranceStatus or 'VALID'),
-                safeBool(vehicleData.isStolen)
+                safeStr(vehicleData.build_year),
+                ownerFirst,
+                ownerLast,
+                '',
+                regStatus,
+                insStatus,
+                safeBool(vehicleData.stolen)
             })
         end)
         if not ok then
@@ -234,57 +246,67 @@ end)
 
 -- ── Callouts ──────────────────────────────────────────────────────────────────
 
-AddEventHandler('ErsIntegration::OnIsOfferedCallout', function(playerSrc, calloutData)
+local function getCalloutName(calloutData)
+    return string.upper(safeStr(calloutData.CalloutName or calloutData.calloutId or 'CALLOUT'))
+end
+
+local function getCalloutLocation(calloutData)
+    return safeStr(calloutData.StreetName or calloutData.location or calloutData.street or '')
+end
+
+RegisterNetEvent('ErsIntegration::OnIsOfferedCallout')
+AddEventHandler('ErsIntegration::OnIsOfferedCallout', function(calloutData)
+    local playerSrc = source
     if not calloutData then return end
     local eventNum = genEventNumber()
-    local callType = string.upper(safeStr(calloutData.calloutName or calloutData.name or calloutData.title or 'CALLOUT'))
-    local location = safeStr(calloutData.location or calloutData.street or '')
     ActiveCallouts[playerSrc] = eventNum
-    insertDispatchWithStatus(eventNum, callType, location, getCalloutPriority(calloutData), 'PENDING', '', calloutData)
+    insertDispatchWithStatus(eventNum, getCalloutName(calloutData), getCalloutLocation(calloutData), getCalloutPriority(calloutData), 'PENDING', '', calloutData)
 end)
 
-AddEventHandler('ErsIntegration::OnAcceptedCalloutOffer', function(playerSrc, calloutData)
-    local callsign = getOfficerCallsign(playerSrc)
-    local eventNum = ActiveCallouts[playerSrc]
+RegisterNetEvent('ErsIntegration::OnAcceptedCalloutOffer')
+AddEventHandler('ErsIntegration::OnAcceptedCalloutOffer', function(calloutData)
+    local playerSrc = source
+    local callsign  = getOfficerCallsign(playerSrc)
+    local eventNum  = ActiveCallouts[playerSrc]
     if eventNum then
         updateDispatchStatus(eventNum, 'ACTIVE', callsign)
     else
-        -- No pending row (e.g. first accept) — create one now
         if not calloutData then return end
         eventNum = genEventNumber()
         ActiveCallouts[playerSrc] = eventNum
-        local callType = string.upper(safeStr(calloutData.calloutName or calloutData.name or calloutData.title or 'CALLOUT'))
-        local location = safeStr(calloutData.location or calloutData.street or '')
-        insertDispatchWithStatus(eventNum, callType, location, getCalloutPriority(calloutData), 'ACTIVE', callsign, calloutData)
+        insertDispatchWithStatus(eventNum, getCalloutName(calloutData), getCalloutLocation(calloutData), getCalloutPriority(calloutData), 'ACTIVE', callsign, calloutData)
     end
 end)
 
-AddEventHandler('ErsIntegration::OnArrivedAtCallout', function(playerSrc, calloutData)
-    local callsign = getOfficerCallsign(playerSrc)
-    local eventNum = ActiveCallouts[playerSrc]
+RegisterNetEvent('ErsIntegration::OnArrivedAtCallout')
+AddEventHandler('ErsIntegration::OnArrivedAtCallout', function(calloutData)
+    local playerSrc = source
+    local callsign  = getOfficerCallsign(playerSrc)
+    local eventNum  = ActiveCallouts[playerSrc]
     if eventNum then
         updateDispatchStatus(eventNum, 'ON SCENE', callsign)
     else
-        -- Officer arrived without going through offer/accept (edge case)
         if not calloutData then return end
         eventNum = genEventNumber()
         ActiveCallouts[playerSrc] = eventNum
-        local callType = string.upper(safeStr(calloutData.calloutName or calloutData.name or calloutData.title or 'CALLOUT'))
-        local location = safeStr(calloutData.location or calloutData.street or '')
-        insertDispatchWithStatus(eventNum, callType, location, getCalloutPriority(calloutData), 'ON SCENE', callsign, calloutData)
+        insertDispatchWithStatus(eventNum, getCalloutName(calloutData), getCalloutLocation(calloutData), getCalloutPriority(calloutData), 'ON SCENE', callsign, calloutData)
     end
 end)
 
-AddEventHandler('ErsIntegration::OnEndedACallout', function(playerSrc)
-    local eventNum = ActiveCallouts[playerSrc]
+RegisterNetEvent('ErsIntegration::OnEndedACallout')
+AddEventHandler('ErsIntegration::OnEndedACallout', function()
+    local playerSrc = source
+    local eventNum  = ActiveCallouts[playerSrc]
     if eventNum then
         updateDispatchStatus(eventNum, 'CLOSED', nil)
         ActiveCallouts[playerSrc] = nil
     end
 end)
 
-AddEventHandler('ErsIntegration::OnCalloutCompletedSuccesfully', function(playerSrc, calloutData)
-    local eventNum = ActiveCallouts[playerSrc]
+RegisterNetEvent('ErsIntegration::OnCalloutCompletedSuccesfully')
+AddEventHandler('ErsIntegration::OnCalloutCompletedSuccesfully', function(calloutData)
+    local playerSrc = source
+    local eventNum  = ActiveCallouts[playerSrc]
     if eventNum then
         updateDispatchStatus(eventNum, 'COMPLETED', nil)
         ActiveCallouts[playerSrc] = nil
@@ -293,7 +315,9 @@ end)
 
 -- ── Traffic stops ─────────────────────────────────────────────────────────────
 
-AddEventHandler('ErsIntegration::OnPullover', function(playerSrc, pedData, vehicleData)
+RegisterNetEvent('ErsIntegration::OnPullover')
+AddEventHandler('ErsIntegration::OnPullover', function(pedData, vehicleData)
+    local playerSrc = source
     upsertCivilian(pedData)
     upsertVehicle(vehicleData)
     local plate    = vehicleData and safeStr(vehicleData.plate) or ''
@@ -303,7 +327,9 @@ AddEventHandler('ErsIntegration::OnPullover', function(playerSrc, pedData, vehic
     insertDispatchWithStatus(eventNum, 'TRAFFIC STOP', location, 3, 'ACTIVE', getOfficerCallsign(playerSrc), { plate = plate })
 end)
 
-AddEventHandler('ErsIntegration::OnPulloverEnded', function(playerSrc, pedData, vehicleData)
+RegisterNetEvent('ErsIntegration::OnPulloverEnded')
+AddEventHandler('ErsIntegration::OnPulloverEnded', function(pedData, vehicleData)
+    local playerSrc = source
     local eventNum = ActivePullovers[playerSrc]
     if eventNum then
         updateDispatchStatus(eventNum, 'CLOSED', nil)
@@ -313,14 +339,18 @@ end)
 
 -- ── Pursuits ──────────────────────────────────────────────────────────────────
 
-AddEventHandler('ErsIntegration::OnPursuitStarted', function(playerSrc, pedData, vehicleData)
+RegisterNetEvent('ErsIntegration::OnPursuitStarted')
+AddEventHandler('ErsIntegration::OnPursuitStarted', function(pedData, vehicleData)
+    local playerSrc = source
     local location = pedData and safeStr(pedData.Address or pedData.address) or ''
     local eventNum = genEventNumber()
     ActivePursuits[playerSrc] = eventNum
     insertDispatchWithStatus(eventNum, 'VEHICLE PURSUIT', location, 1, 'ACTIVE', getOfficerCallsign(playerSrc), pedData)
 end)
 
-AddEventHandler('ErsIntegration::OnPursuitEnded', function(playerSrc, pedData, vehicleData)
+RegisterNetEvent('ErsIntegration::OnPursuitEnded')
+AddEventHandler('ErsIntegration::OnPursuitEnded', function(pedData, vehicleData)
+    local playerSrc = source
     local eventNum = ActivePursuits[playerSrc]
     if eventNum then
         updateDispatchStatus(eventNum, 'CLOSED', nil)
@@ -328,7 +358,16 @@ AddEventHandler('ErsIntegration::OnPursuitEnded', function(playerSrc, pedData, v
     end
 end)
 
-AddEventHandler('ErsIntegration::OnToggleShift', function(playerSrc, isOnShift, serviceType)
+RegisterNetEvent('ErsIntegration::OnToggleShift')
+AddEventHandler('ErsIntegration::OnToggleShift', function(arg1, arg2, arg3)
+    -- ERS fires server-side on resource start: (playerSrc, isOnShift, serviceType)
+    -- ERS fires client-side on manual toggle:  (isOnShift, serviceType) — source is the player
+    local playerSrc, isOnShift, serviceType
+    if type(arg1) == 'number' and arg1 > 0 then
+        playerSrc, isOnShift, serviceType = arg1, arg2, arg3
+    else
+        playerSrc, isOnShift, serviceType = source, arg1, arg2
+    end
     cleanStaleUnits()
     if isOnShift then
         local info = ActiveOfficerInfo[playerSrc] or {}
@@ -574,6 +613,30 @@ AddEventHandler('lwk_cad:updateUnitStatus', function(data, requestId)
     end)
 end)
 
+-- ─── clear dispatch (officer clears own call; admin clears any) ───────────────
+
+RegisterNetEvent('lwk_cad:clearDispatch')
+AddEventHandler('lwk_cad:clearDispatch', function(data)
+    local src = source
+    if not data or not data.eventNumber then return end
+
+    local isAdmin = IsPlayerAceAllowed(tostring(src), Config.AdminAce or 'group.admin')
+    if not isAdmin then
+        -- allow only if the officer's callsign is in assigned_units
+        local rows = MySQL.query.await('SELECT assigned_units FROM lwk_dispatch WHERE event_number = ? LIMIT 1', { data.eventNumber })
+        if not rows or #rows == 0 then return end
+        local assigned = rows[1].assigned_units or ''
+        local callsign = getOfficerCallsign(src)
+        if callsign == '' or not assigned:find(callsign, 1, true) then return end
+    end
+
+    updateDispatchStatus(data.eventNumber, 'COMPLETED', nil)
+    -- clear tracking so stale event_numbers don't linger
+    for s, ev in pairs(ActiveCallouts)  do if ev == data.eventNumber then ActiveCallouts[s]  = nil end end
+    for s, ev in pairs(ActivePullovers) do if ev == data.eventNumber then ActivePullovers[s] = nil end end
+    for s, ev in pairs(ActivePursuits)  do if ev == data.eventNumber then ActivePursuits[s]  = nil end end
+end)
+
 -- ─── dispatch/unit cleanup loop ───────────────────────────────────────────────
 
 CreateThread(function()
@@ -683,4 +746,9 @@ CreateThread(function()
     ]])
 
     print('[lwk_cad] database schema ready')
+
+    -- Reset open calls and units so stale rows from a previous session don't persist
+    MySQL.query("UPDATE lwk_dispatch SET status = 'CLOSED' WHERE status IN ('PENDING','ACTIVE','ON SCENE')")
+    MySQL.query("DELETE FROM lwk_active_units")
+    print('[lwk_cad] cleared stale active calls and units')
 end)

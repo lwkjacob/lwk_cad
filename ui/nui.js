@@ -211,6 +211,17 @@ function licClass(isValid, status) {
     return isValid ? 'flag-green' : 'flag-red';
 }
 
+function normLicStatus(raw, isValid) {
+    if (!raw || raw === 'No license') return 'No License';
+    var s = raw.toLowerCase();
+    if (s.indexOf('revoked')    !== -1) return 'Revoked';
+    if (s.indexOf('suspended')  !== -1) return 'Suspended';
+    if (s.indexOf('expired')    !== -1) return 'Expired';
+    if (s.indexOf('invalid')    !== -1) return 'Invalid';
+    if (s.indexOf('restricted') !== -1) return 'Restricted';
+    return isValid ? 'Valid' : 'Invalid';
+}
+
 function renderPersonResult(data) {
     var panel = document.querySelector('#tab-person .panel:nth-child(2)');
     if (!panel) return;
@@ -286,8 +297,8 @@ function renderPersonResult(data) {
         var truckStatus = raw.License_Truck || '';
         if (carStatus || truckStatus) {
             html += '<div class="sec-hdr">Licenses</div><div style="padding:5px 8px;display:flex;flex-wrap:wrap;gap:4px">';
-            if (carStatus)   html += '<span class="flag ' + licClass(carValid, carStatus)   + '">Driver\'s License: ' + esc(carStatus)   + '</span>';
-            if (truckStatus) html += '<span class="flag ' + licClass(truckValid, truckStatus) + '">Commercial Vehicle: ' + esc(truckStatus) + '</span>';
+            if (carStatus)   html += '<span class="flag ' + licClass(carValid, carStatus)     + '">Driver\'s License: '    + esc(normLicStatus(carStatus,   carValid))   + '</span>';
+            if (truckStatus) html += '<span class="flag ' + licClass(truckValid, truckStatus) + '">Commercial Vehicle: '  + esc(normLicStatus(truckStatus, truckValid)) + '</span>';
             html += '</div>';
         }
     });
@@ -431,10 +442,33 @@ function prependDispatchRow(c) {
     if (!c) return;
     var tbody = document.querySelector('#tab-dispatch .g-disp tbody');
     if (!tbody) return;
-    var empty = tbody.querySelector('td[colspan]');
-    if (empty) tbody.innerHTML = '';
-    dispatchRows[c.id] = c;
-    tbody.insertAdjacentHTML('afterbegin', buildDispatchRow(c));
+
+    var finished = (c.status === 'CLOSED' || c.status === 'COMPLETED');
+    var existing = c.event_number ? tbody.querySelector('tr[data-ev="' + c.event_number + '"]') : null;
+
+    if (existing) {
+        if (finished) {
+            existing.remove();
+            delete dispatchRows[c.event_number];
+        } else {
+            // merge updated fields and re-render in place
+            var merged = Object.assign({}, dispatchRows[c.event_number] || {}, c);
+            dispatchRows[c.event_number] = merged;
+            existing.outerHTML = buildDispatchRow(merged);
+        }
+    } else if (!finished) {
+        var empty = tbody.querySelector('td[colspan]');
+        if (empty) tbody.innerHTML = '';
+        dispatchRows[c.event_number] = c;
+        tbody.insertAdjacentHTML('afterbegin', buildDispatchRow(c));
+    }
+
+    // update the active count label
+    var countEl = document.querySelector('#tab-dispatch .panel-hdr span[style*="color:#555"]');
+    if (countEl) {
+        var rows = tbody.querySelectorAll('tr[data-ev]');
+        countEl.textContent = '(' + rows.length + ' active)';
+    }
 }
 
 function buildDispatchRow(c) {
@@ -449,14 +483,15 @@ function buildDispatchRow(c) {
         'COMPLETED': '<span class="c-green">COMPLETED</span>'
     };
     var statusHtml = statusMap[c.status] || esc(c.status);
-    return '<tr>'
+    var clearBtn = '<button class="fbtn disp-clear-btn" data-ev="' + esc(c.event_number) + '" style="font-size:9px;padding:1px 5px;margin-left:4px;vertical-align:middle">Clear</button>';
+    return '<tr data-ev="' + esc(c.event_number) + '">'
         + '<td><span class="' + priClass + '">' + esc(c.priority) + '</span></td>'
         + '<td class="c-blue">' + esc(c.event_number) + '</td>'
         + '<td class="' + typeClass + '">' + esc(c.call_type) + '</td>'
         + '<td>' + esc(c.location) + '</td>'
         + '<td>' + esc(c.assigned_units || '—') + '</td>'
         + '<td>' + timeStr + '</td>'
-        + '<td>' + statusHtml + '</td>'
+        + '<td>' + statusHtml + clearBtn + '</td>'
         + '</tr>';
 }
 
@@ -821,6 +856,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.lwkOfficer = payload;
                 postToLua('officerLogin', payload);
                 applyDeptToForms(deptVal);
+                try { localStorage.setItem('lwk_login', JSON.stringify(payload)); } catch(e) {}
             });
         };
     }
@@ -874,5 +910,25 @@ document.addEventListener('DOMContentLoaded', function() {
             postToLua('getActiveUnits', {});
         });
     }
+
+    // ── dispatch Clear button ─────────────────────────────────────────────────
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.disp-clear-btn');
+        if (!btn) return;
+        postToLua('clearDispatch', { eventNumber: btn.dataset.ev });
+    });
+
+    // ── restore last login ────────────────────────────────────────────────────
+    try {
+        var saved = JSON.parse(localStorage.getItem('lwk_login') || 'null');
+        if (saved) {
+            var deptEl = document.getElementById('login-dept');
+            var nameEl = document.getElementById('login-name');
+            var csEl   = document.getElementById('login-callsign');
+            if (deptEl && saved.department) { deptEl.value = saved.department; window.updateDept && window.updateDept(); }
+            if (nameEl && saved.name)       nameEl.value = saved.name;
+            if (csEl   && saved.callsign)   csEl.value   = saved.callsign;
+        }
+    } catch(e) {}
 
 });
