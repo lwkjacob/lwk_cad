@@ -135,7 +135,7 @@ html,body{margin:0;padding:0;background:#285e8e;font-family:"Tahoma","Geneva","S
 
 /* ── column widths ── */
 .g-disp col.pr{width:26px}.g-disp col.ev{width:100px}.g-disp col.ct{width:24%}
-.g-disp col.lo{width:28%}.g-disp col.un{width:12%}.g-disp col.ti{width:7%}.g-disp col.du{width:7%}
+.g-disp col.lo{width:20%}.g-disp col.un{width:12%}.g-disp col.ti{width:7%}.g-disp col.du{width:17%}
 
 .g-units col.un{width:10%}.g-units col.of{width:18%}.g-units col.st{width:9%}
 .g-units col.as{width:24%}.g-units col.lo{width:26%}.g-units col.ti{width:7%}.g-units col.sh{width:6%}
@@ -167,30 +167,30 @@ html,body{margin:0;padding:0;background:#285e8e;font-family:"Tahoma","Geneva","S
 .form-no-sel .hint{font-size:12px;color:#bbb}
 
 /* ── paper document ── */
-.doc{background:#fff;border:1px solid #bbb;padding:18px 20px;max-width:720px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;font-size:10.5px;color:#000;box-shadow:0 2px 8px rgba(0,0,0,.45)}
-.doc-hdr{display:flex;align-items:center;gap:14px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #000}
-.doc-seal{width:54px;height:54px;flex-shrink:0}
+.doc{background:#fff;border:1px solid #bbb;padding:22px 26px;max-width:820px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#000;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+.doc-hdr{display:flex;align-items:center;gap:14px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #000}
+.doc-seal{width:62px;height:62px;flex-shrink:0}
 .doc-agency{flex:1}
-.doc-agency .ag-name{font-size:13px;font-weight:700;text-decoration:underline;letter-spacing:.03em;font-family:"Times New Roman",serif}
-.doc-agency .ag-form{font-size:12px;font-weight:700;letter-spacing:.04em;font-family:"Times New Roman",serif;margin-top:2px}
-.doc-agency .ag-sub{font-size:10px;color:#444;margin-top:1px}
-.doc-num{text-align:right;font-size:10px}
-.doc-num .num-lbl{color:#555;font-size:9px}
-.doc-num .num-val{font-size:13px;font-weight:700;letter-spacing:.06em}
+.doc-agency .ag-name{font-size:15px;font-weight:700;text-decoration:underline;letter-spacing:.03em;font-family:"Times New Roman",serif}
+.doc-agency .ag-form{font-size:13px;font-weight:700;letter-spacing:.04em;font-family:"Times New Roman",serif;margin-top:3px}
+.doc-agency .ag-sub{font-size:11px;color:#444;margin-top:2px}
+.doc-num{text-align:right;font-size:11px}
+.doc-num .num-lbl{color:#555;font-size:10px}
+.doc-num .num-val{font-size:15px;font-weight:700;letter-spacing:.06em}
 
 /* form field cells */
 .ft{width:100%;border-collapse:collapse;margin-bottom:0}
-.ft td{border:1px solid #000;padding:2px 4px 3px;vertical-align:top;font-size:10.5px}
-.ft .fl{font-size:8.5px;color:#333;display:block;line-height:1.2;margin-bottom:1px;white-space:nowrap}
-.ft .fi{width:100%;border:none;background:transparent;font:inherit;font-size:11px;padding:0;outline:none;color:#000;min-width:0}
+.ft td{border:1px solid #000;padding:5px 7px 6px;vertical-align:top;font-size:12px}
+.ft .fl{font-size:10px;color:#333;display:block;line-height:1.2;margin-bottom:2px;white-space:nowrap;font-weight:600;letter-spacing:.02em}
+.ft .fi{width:100%;border:none;background:transparent;font:inherit;font-size:13px;padding:1px 0;outline:none;color:#000;min-width:0}
 .ft .fi:focus{background:#fffde8}
-.ft textarea.fi{resize:none;font-size:10.5px;line-height:1.4}
-.ft select.fi{appearance:none;-webkit-appearance:none}
-.ft .cb{vertical-align:middle;margin:0 3px 0 0;cursor:default}
-.sect-bar{background:#ddd;border:1px solid #000;font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 5px;text-align:center}
-.sig-box{border:1px solid #000;padding:4px 8px;font-size:10px}
-.sig-name{font-size:13px;font-weight:700;letter-spacing:.04em;margin-top:2px}
-.sig-lbl{font-size:9px;color:#444;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #555;padding-top:2px;margin-top:6px}
+.ft textarea.fi{resize:none;font-size:12px;line-height:1.5}
+.ft select.fi{appearance:none;-webkit-appearance:none;font-size:13px}
+.ft .cb{vertical-align:middle;margin:0 4px 0 0;cursor:default;width:14px;height:14px}
+.sect-bar{background:#ddd;border:1px solid #000;font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 7px;text-align:center}
+.sig-box{border:1px solid #000;padding:7px 10px;font-size:11px}
+.sig-name{font-size:15px;font-weight:700;letter-spacing:.04em;margin-top:3px}
+.sig-lbl{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #555;padding-top:3px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -781,17 +781,17 @@ const warnHTML=`<div class="doc" id="f-warning" class="f-doc" style="display:non
   ${docHdr('WRITTEN WARNING','f-warning')}
   <table class="ft"><tr>
     <td colspan="2"><span class="fl">Officer / Unit</span><input class="fi" type="text" value="CALLAHAN, R. — 3-ADAM-14" data-lock="1"></td>
-    <td><span class="fl">Date</span><input class="fi" type="text" id="f-warning-date"></td>
-    <td><span class="fl">Time</span><input class="fi" type="text" id="f-warning-time"></td>
-    <td><span class="fl">Location</span><input class="fi" type="text"></td>
+    <td style="width:22%"><span class="fl">Date</span><input class="fi" type="text" id="f-warning-date"></td>
+    <td style="width:14%"><span class="fl">Time</span><input class="fi" type="text" id="f-warning-time"></td>
+    <td style="width:26%"><span class="fl">Location</span><input class="fi" type="text"></td>
   </tr></table>
   <div class="sect-bar" style="margin-top:6px">SUBJECT INFORMATION</div>
   <table class="ft">
     <tr>
       <td style="width:32%"><span class="fl">Last Name</span><input class="fi" type="text"></td>
       <td style="width:28%"><span class="fl">First Name</span><input class="fi" type="text"></td>
-      <td style="width:18%"><span class="fl">Middle</span><input class="fi" type="text"></td>
-      <td style="width:22%"><span class="fl">Date of Birth</span><input class="fi" type="text"></td>
+      <td style="width:16%"><span class="fl">Middle</span><input class="fi" type="text"></td>
+      <td><span class="fl">Date of Birth</span><input class="fi" type="text"></td>
     </tr>
     <tr>
       <td colspan="2"><span class="fl">Residential Address</span><input class="fi" type="text"></td>
@@ -799,27 +799,27 @@ const warnHTML=`<div class="doc" id="f-warning" class="f-doc" style="display:non
       <td><span class="fl">Driver License #</span><input class="fi" type="text"></td>
     </tr>
     <tr>
-      <td><span class="fl">Vehicle Plate</span><input class="fi" type="text"></td>
+      <td style="width:20%"><span class="fl">Vehicle Plate</span><input class="fi" type="text"></td>
       <td><span class="fl">Make / Model</span><input class="fi" type="text"></td>
-      <td><span class="fl">Year</span><input class="fi" type="text"></td>
-      <td><span class="fl">Color</span><input class="fi" type="text"></td>
+      <td style="width:14%"><span class="fl">Year</span><input class="fi" type="text"></td>
+      <td style="width:16%"><span class="fl">Color</span><input class="fi" type="text"></td>
     </tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">WARNING DETAILS</div>
   <table class="ft">
     <tr>
-      <td style="width:22%"><span class="fl">Violation Code / Section</span><input class="fi" type="text"></td>
+      <td style="width:24%"><span class="fl">Violation Code / Section</span><input class="fi" type="text"></td>
       <td colspan="3"><span class="fl">Violation Description</span><input class="fi" type="text"></td>
     </tr>
     <tr>
-      <td colspan="4" style="height:60px"><span class="fl">Officer Narrative / Notes</span><textarea class="fi" rows="4" style="width:100%;height:58px"></textarea></td>
+      <td colspan="4" style="height:84px"><span class="fl">Officer Narrative / Notes</span><textarea class="fi" rows="5" style="width:100%;height:82px"></textarea></td>
     </tr>
   </table>
-  <div style="display:flex;gap:8px;margin-top:6px">
-    <div class="sig-box" style="flex:1"><div style="font-size:10px">X <span style="display:inline-block;width:200px;border-bottom:1px solid #000">&nbsp;</span></div><div class="sig-lbl">Subject Signature (if obtained)</div></div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="sig-box" style="flex:1"><div style="font-size:11px">X <span style="display:inline-block;width:220px;border-bottom:1px solid #000">&nbsp;</span></div><div class="sig-lbl">Subject Signature (if obtained)</div></div>
     <div class="sig-box" style="text-align:right">
       <div class="sig-name">CALLAHAN, RYAN</div>
-      <div style="font-size:10px;color:#444">3-ADAM-14</div>
+      <div style="font-size:11px;color:#444">3-ADAM-14</div>
       <div class="sig-lbl">Issuing Officer · Badge / Identifier</div>
     </div>
   </div>
@@ -827,119 +827,94 @@ const warnHTML=`<div class="doc" id="f-warning" class="f-doc" style="display:non
 
 /* ─── CITATION FORM ─── */
 const citHTML=`<div class="doc" id="f-citation" class="f-doc" style="display:none">
-  ${docHdr('SAN ANDREAS TRAFFIC TICKET AND COMPLAINT','f-citation')}
+  ${docHdr('TRAFFIC CITATION','f-citation')}
+  <div class="sect-bar" style="margin-top:2px">OFFENDER INFORMATION</div>
   <table class="ft">
     <tr>
-      <td style="width:34%"><span class="fl">Driver License Number</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">State</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Class</span><input class="fi" type="text"></td>
-      <td style="width:22%"><span class="fl">Endorsements</span><input class="fi" type="text"></td>
-      <td><span class="fl">Restrictions</span><input class="fi" type="text"></td>
+      <td style="width:36%"><span class="fl">Driver License Number</span><input class="fi" type="text"></td>
+      <td style="width:10%"><span class="fl">State</span><input class="fi" type="text"></td>
+      <td style="width:12%"><span class="fl">Class</span><input class="fi" type="text"></td>
+      <td><span class="fl">Endorsements / Restrictions</span><input class="fi" type="text"></td>
     </tr>
-  </table>
-  <table class="ft">
     <tr>
-      <td style="width:32%"><span class="fl">Name: Last</span><input class="fi" type="text"></td>
-      <td style="width:32%"><span class="fl">First</span><input class="fi" type="text"></td>
-      <td><span class="fl">Middle</span><input class="fi" type="text"></td>
+      <td style="width:30%"><span class="fl">Last Name</span><input class="fi" type="text"></td>
+      <td style="width:28%"><span class="fl">First Name</span><input class="fi" type="text"></td>
+      <td style="width:16%"><span class="fl">Middle</span><input class="fi" type="text"></td>
+      <td><span class="fl">Date of Birth</span><input class="fi" type="text"></td>
     </tr>
     <tr>
       <td colspan="2"><span class="fl">Residential Address</span><input class="fi" type="text"></td>
-      <td><span class="fl">City</span><input class="fi" type="text"></td>
+      <td colspan="2"><span class="fl">City / State / Postal</span><input class="fi" type="text"></td>
     </tr>
     <tr>
-      <td style="width:10%"><span class="fl">State</span><input class="fi" type="text"></td>
-      <td style="width:14%"><span class="fl">Postal</span><input class="fi" type="text"></td>
+      <td style="width:14%"><span class="fl">Gender</span><input class="fi" type="text"></td>
+      <td style="width:16%"><span class="fl">Height</span><input class="fi" type="text"></td>
+      <td style="width:16%"><span class="fl">Weight</span><input class="fi" type="text"></td>
       <td><span class="fl">Phone Number</span><input class="fi" type="text"></td>
     </tr>
   </table>
+  <div class="sect-bar" style="margin-top:6px">VEHICLE INFORMATION</div>
   <table class="ft">
     <tr>
-      <td style="width:9%"><span class="fl">Gender</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Eyes</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Hair</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Height</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Weight</span><input class="fi" type="text"></td>
-      <td style="width:22%"><span class="fl">Date of Birth</span><input class="fi" type="text"></td>
-      <td><span class="fl">Email Address</span><input class="fi" type="text"></td>
+      <td style="width:22%"><span class="fl">License Plate</span><input class="fi" type="text"></td>
+      <td style="width:12%"><span class="fl">Year</span><input class="fi" type="text"></td>
+      <td style="width:22%"><span class="fl">Make</span><input class="fi" type="text"></td>
+      <td><span class="fl">Model</span><input class="fi" type="text"></td>
+    </tr>
+    <tr>
+      <td style="width:16%"><span class="fl">Color</span><input class="fi" type="text"></td>
+      <td><span class="fl">Registered Owner</span><input class="fi" type="text"></td>
+      <td><span class="fl">Owner Address</span><input class="fi" type="text"></td>
+      <td style="width:18%"><span class="fl">VIN</span><input class="fi" type="text"></td>
     </tr>
   </table>
+  <div class="sect-bar" style="margin-top:6px">VIOLATION</div>
   <table class="ft">
     <tr>
-      <td style="width:20%"><span class="fl">License Plate</span><input class="fi" type="text"></td>
-      <td style="width:8%"><span class="fl">Year</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Color</span><input class="fi" type="text"></td>
-      <td style="width:14%"><span class="fl">Make</span><input class="fi" type="text"></td>
-      <td style="width:14%"><span class="fl">Model</span><input class="fi" type="text"></td>
-      <td style="width:7%"><span class="fl">State</span><input class="fi" type="text"></td>
-      <td style="width:14%"><span class="fl">Expiration Date</span><input class="fi" type="text"></td>
-      <td><span class="fl">VIN</span><input class="fi" type="text"></td>
+      <td style="width:16%"><span class="fl">Date</span><input class="fi" type="text" id="f-citation-date"></td>
+      <td style="width:12%"><span class="fl">Time</span><input class="fi" type="text" id="f-citation-time"></td>
+      <td colspan="2"><span class="fl">Location of Violation</span><input class="fi" type="text"></td>
     </tr>
-    <tr>
-      <td colspan="2"><span class="fl">Registered Owner</span><input class="fi" type="text"></td>
-      <td colspan="3"><span class="fl">Address</span><input class="fi" type="text"></td>
-      <td colspan="2"><span class="fl">City</span><input class="fi" type="text"></td>
-      <td><span class="fl">State / Postal</span><input class="fi" type="text"></td>
-    </tr>
-  </table>
-  <div class="sect-bar" style="margin-top:6px">THE UNDERSIGNED CERTIFIES THAT:</div>
-  <table class="ft">
-    <tr>
-      <td style="width:14%"><span class="fl">Date</span><input class="fi" type="text" id="f-citation-date"></td>
-      <td style="width:10%"><span class="fl">Time</span><input class="fi" type="text" id="f-citation-time"></td>
-      <td style="width:10%;background:#ddd;font-weight:700;font-size:11px;text-align:center;vertical-align:middle">SPEED:</td>
-      <td style="width:10%"><span class="fl">Approx</span><input class="fi" type="text"></td>
-      <td style="width:10%"><span class="fl">Posted</span><input class="fi" type="text"></td>
-      <td style="width:10%"><span class="fl">R&amp;P</span><input class="fi" type="text"></td>
-      <td style="width:24%"><span class="fl">Speed Measurement Device</span><input class="fi" type="text"></td>
-      <td><span class="fl">Direction of Travel</span><input class="fi" type="text"></td>
-    </tr>
-    <tr>
-      <td style="width:10%"><span class="fl">Postal</span><input class="fi" type="text"></td>
-      <td colspan="4"><span class="fl">Location of Violation</span><input class="fi" type="text"></td>
-      <td colspan="2"><span class="fl">City</span><input class="fi" type="text"></td>
-      <td><span class="fl">County</span><input class="fi" type="text"></td>
-    </tr>
-  </table>
-  <div class="sect-bar" style="margin-top:6px">THE DEFENDANT COMMITTED THE FOLLOWING:</div>
-  <table class="ft">
     <tr>
       <td style="width:28%"><span class="fl">Section</span><input class="fi" type="text"></td>
-      <td><span class="fl">Violation</span><input class="fi" type="text"></td>
+      <td colspan="3"><span class="fl">Violation</span><input class="fi" type="text"></td>
     </tr>
     <tr>
+      <td colspan="2">
+        <span class="fl">Speed — Approx / Posted</span>
+        <input class="fi" type="text" style="width:56px;display:inline-block"> &nbsp;/&nbsp; <input class="fi" type="text" style="width:56px;display:inline-block">
+      </td>
       <td colspan="2">
         <span class="fl">Offense Classification</span>
         <label><input type="checkbox" class="cb"> Infraction</label>&nbsp;&nbsp;
         <label><input type="checkbox" class="cb"> Misdemeanor</label>&nbsp;&nbsp;
         <label><input type="checkbox" class="cb"> Felony</label>&nbsp;&nbsp;&nbsp;
-        <span style="margin-left:14px">Fine Amount: $<input class="fi" type="text" style="width:60px;display:inline-block;border-bottom:1px solid #888"></span>&nbsp;&nbsp;
-        Points: <input class="fi" type="text" style="width:30px;display:inline-block;border-bottom:1px solid #888">
+        Fine: $<input class="fi" type="text" style="width:60px;display:inline-block;border-bottom:1px solid #888">&nbsp;&nbsp;
+        Points: <input class="fi" type="text" style="width:36px;display:inline-block;border-bottom:1px solid #888">
       </td>
     </tr>
   </table>
   <table class="ft" style="margin-top:6px">
-    <tr>
-      <td style="width:35%;background:#222;color:#fff;font-weight:700;font-size:10px;text-align:center;padding:4px">YOU MUST<br>APPEAR AT:</td>
-      <td><span class="fl">Court</span><input class="fi" type="text" placeholder="Mission Row District Court"></td>
-      <td style="width:35%;background:#222;color:#fff;font-weight:700;font-size:10px;text-align:center;padding:4px">AT OR BEFORE THE DATE<br>AND TIME INDICATED:</td>
-      <td style="width:14%"><span class="fl">Date</span><input class="fi" type="text"></td>
-      <td style="width:10%"><span class="fl">Time</span><input class="fi" type="text"></td>
-    </tr>
+    <tr><td style="height:84px"><span class="fl">Narrative</span><textarea class="fi" rows="5" style="width:100%;height:82px" placeholder="Enter report narrative here..."></textarea></td></tr>
   </table>
   <table class="ft" style="margin-top:6px">
-    <tr><td style="height:72px"><span class="fl">Narrative</span><textarea class="fi" rows="5" style="width:100%;height:70px" placeholder="Enter report narrative here..."></textarea></td></tr>
+    <tr>
+      <td style="width:30%;background:#222;color:#fff;font-weight:700;font-size:11px;text-align:center;padding:5px">YOU MUST APPEAR AT:</td>
+      <td><span class="fl">Court</span><input class="fi" type="text" placeholder="Mission Row District Court"></td>
+      <td style="width:30%;background:#222;color:#fff;font-weight:700;font-size:11px;text-align:center;padding:5px">AT OR BEFORE:</td>
+      <td style="width:18%"><span class="fl">Date / Time</span><input class="fi" type="text"></td>
+    </tr>
   </table>
-  <div style="display:flex;gap:8px;margin-top:6px">
+  <div style="display:flex;gap:8px;margin-top:8px">
     <div class="sig-box" style="flex:1">
-      <div style="display:flex;align-items:center;gap:6px">
-        <input type="checkbox" class="cb" style="width:16px;height:16px">
-        <div style="background:#888;color:#fff;font-size:14px;font-weight:700;padding:4px 18px;letter-spacing:.08em">SERVED</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" class="cb" style="width:18px;height:18px">
+        <div style="background:#888;color:#fff;font-size:14px;font-weight:700;padding:5px 22px;letter-spacing:.08em">SERVED</div>
       </div>
     </div>
     <div class="sig-box" style="text-align:right">
       <div class="sig-name">CALLAHAN, RYAN</div>
-      <div style="font-size:10px;color:#444">3-ADAM-14</div>
+      <div style="font-size:11px;color:#444">3-ADAM-14</div>
       <div class="sig-lbl">Complainant · Identifier</div>
     </div>
   </div>
@@ -952,8 +927,8 @@ const arrstHTML=`<div class="doc" id="f-arrest" class="f-doc" style="display:non
   <table class="ft">
     <tr>
       <td style="width:30%"><span class="fl">Last Name</span><input class="fi" type="text"></td>
-      <td style="width:26%"><span class="fl">First Name</span><input class="fi" type="text"></td>
-      <td style="width:18%"><span class="fl">Middle</span><input class="fi" type="text"></td>
+      <td style="width:28%"><span class="fl">First Name</span><input class="fi" type="text"></td>
+      <td style="width:16%"><span class="fl">Middle</span><input class="fi" type="text"></td>
       <td><span class="fl">Date of Birth</span><input class="fi" type="text"></td>
     </tr>
     <tr>
@@ -964,21 +939,21 @@ const arrstHTML=`<div class="doc" id="f-arrest" class="f-doc" style="display:non
     <tr>
       <td><span class="fl">Driver License #</span><input class="fi" type="text"></td>
       <td><span class="fl">State ID</span><input class="fi" type="text"></td>
-      <td><span class="fl">SSN / Last 4</span><input class="fi" type="text" placeholder="XXX-XX-####"></td>
-      <td><span class="fl">Occupation</span><input class="fi" type="text"></td>
+      <td><span class="fl">Race</span><input class="fi" type="text"></td>
+      <td><span class="fl">Sex</span><input class="fi" type="text"></td>
     </tr>
     <tr>
-      <td style="width:8%"><span class="fl">Race</span><input class="fi" type="text"></td>
-      <td style="width:8%"><span class="fl">Sex</span><input class="fi" type="text"></td>
-      <td style="width:10%"><span class="fl">Height</span><input class="fi" type="text"></td>
-      <td style="width:10%"><span class="fl">Weight</span><input class="fi" type="text"></td>
+      <td><span class="fl">Height</span><input class="fi" type="text"></td>
+      <td><span class="fl">Weight</span><input class="fi" type="text"></td>
+      <td><span class="fl">Hair</span><input class="fi" type="text"></td>
+      <td><span class="fl">Occupation</span><input class="fi" type="text"></td>
     </tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">ARREST DETAILS</div>
   <table class="ft">
     <tr>
-      <td style="width:18%"><span class="fl">Arrest Date</span><input class="fi" type="text" id="f-arrest-date"></td>
-      <td style="width:12%"><span class="fl">Time</span><input class="fi" type="text" id="f-arrest-time"></td>
+      <td style="width:20%"><span class="fl">Arrest Date</span><input class="fi" type="text" id="f-arrest-date"></td>
+      <td style="width:14%"><span class="fl">Time</span><input class="fi" type="text" id="f-arrest-time"></td>
       <td colspan="2"><span class="fl">Location of Arrest</span><input class="fi" type="text"></td>
     </tr>
     <tr>
@@ -990,9 +965,9 @@ const arrstHTML=`<div class="doc" id="f-arrest" class="f-doc" style="display:non
   <div class="sect-bar" style="margin-top:6px">CHARGES</div>
   <table class="ft">
     <tr>
-      <td style="width:22%"><span class="fl">Primary Charge — PC Section</span><input class="fi" type="text"></td>
+      <td style="width:24%"><span class="fl">Primary Charge — PC Section</span><input class="fi" type="text"></td>
       <td><span class="fl">Charge Description</span><input class="fi" type="text"></td>
-      <td style="width:16%"><span class="fl">Classification</span>
+      <td style="width:18%"><span class="fl">Classification</span>
         <select class="fi"><option>—</option><option>Felony</option><option>Misdemeanor</option><option>Infraction</option></select>
       </td>
     </tr>
@@ -1009,20 +984,20 @@ const arrstHTML=`<div class="doc" id="f-arrest" class="f-doc" style="display:non
   </table>
   <div class="sect-bar" style="margin-top:6px">NARRATIVE</div>
   <table class="ft">
-    <tr><td style="height:90px"><textarea class="fi" rows="6" style="width:100%;height:88px" placeholder="Describe the circumstances of the arrest..."></textarea></td></tr>
+    <tr><td style="height:104px"><textarea class="fi" rows="6" style="width:100%;height:102px" placeholder="Describe the circumstances of the arrest..."></textarea></td></tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">PROPERTY / EVIDENCE SEIZED</div>
   <table class="ft">
-    <tr><td style="height:48px"><textarea class="fi" rows="3" style="width:100%;height:46px" placeholder="List items seized (or write NONE)..."></textarea></td></tr>
+    <tr><td style="height:64px"><textarea class="fi" rows="3" style="width:100%;height:62px" placeholder="List items seized (or write NONE)..."></textarea></td></tr>
   </table>
-  <div style="display:flex;gap:8px;margin-top:6px">
+  <div style="display:flex;gap:8px;margin-top:8px">
     <div class="sig-box" style="flex:1">
-      <span style="font-size:10px">Booking Officer: </span><input type="text" style="border:none;border-bottom:1px solid #000;width:200px;font:inherit;font-size:11px;background:transparent">
+      <span style="font-size:11px">Booking Officer: </span><input type="text" style="border:none;border-bottom:1px solid #000;width:200px;font:inherit;font-size:12px;background:transparent">
       <div class="sig-lbl">Booking Officer Signature</div>
     </div>
     <div class="sig-box" style="text-align:right">
       <div class="sig-name">CALLAHAN, RYAN</div>
-      <div style="font-size:10px;color:#444">3-ADAM-14</div>
+      <div style="font-size:11px;color:#444">3-ADAM-14</div>
       <div class="sig-lbl">Arresting Officer · Badge</div>
     </div>
   </div>
@@ -1035,7 +1010,7 @@ const incHTML=`<div class="doc" id="f-incident" class="f-doc" style="display:non
   <table class="ft">
     <tr>
       <td style="width:30%"><span class="fl">Incident Type / Call Type</span><input class="fi" type="text"></td>
-      <td style="width:18%"><span class="fl">Date</span><input class="fi" type="text" id="f-incident-date"></td>
+      <td style="width:20%"><span class="fl">Date</span><input class="fi" type="text" id="f-incident-date"></td>
       <td style="width:14%"><span class="fl">Time</span><input class="fi" type="text" id="f-incident-time"></td>
       <td><span class="fl">Event # (Sprint)</span><input class="fi" type="text"></td>
     </tr>
@@ -1052,26 +1027,31 @@ const incHTML=`<div class="doc" id="f-incident" class="f-doc" style="display:non
   </table>
   <div class="sect-bar" style="margin-top:6px">INVOLVED PERSONS</div>
   <table class="ft">
-    <thead><tr style="background:#eee"><td style="font-weight:700;font-size:10px;width:10%">Role</td><td style="font-weight:700;font-size:10px;width:30%">Name</td><td style="font-weight:700;font-size:10px;width:18%">DOB</td><td style="font-weight:700;font-size:10px">Address / Notes</td></tr></thead>
+    <thead><tr style="background:#eee">
+      <td style="font-weight:700;font-size:11px;width:12%">Role</td>
+      <td style="font-weight:700;font-size:11px;width:30%">Name</td>
+      <td style="font-weight:700;font-size:11px;width:18%">DOB</td>
+      <td style="font-weight:700;font-size:11px">Address / Notes</td>
+    </tr></thead>
     <tr><td><select class="fi"><option>Victim</option><option>Witness</option><option>Suspect</option><option>Other</option></select></td><td><input class="fi" type="text"></td><td><input class="fi" type="text"></td><td><input class="fi" type="text"></td></tr>
     <tr><td><select class="fi"><option>Victim</option><option>Witness</option><option>Suspect</option><option>Other</option></select></td><td><input class="fi" type="text"></td><td><input class="fi" type="text"></td><td><input class="fi" type="text"></td></tr>
     <tr><td><select class="fi"><option>Victim</option><option>Witness</option><option>Suspect</option><option>Other</option></select></td><td><input class="fi" type="text"></td><td><input class="fi" type="text"></td><td><input class="fi" type="text"></td></tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">NARRATIVE</div>
   <table class="ft">
-    <tr><td style="height:120px"><textarea class="fi" rows="8" style="width:100%;height:118px" placeholder="Provide a full account of the incident, actions taken, and outcome..."></textarea></td></tr>
+    <tr><td style="height:134px"><textarea class="fi" rows="8" style="width:100%;height:132px" placeholder="Provide a full account of the incident, actions taken, and outcome..."></textarea></td></tr>
   </table>
   <table class="ft" style="margin-top:6px">
     <tr>
       <td style="width:50%"><span class="fl">Property / Evidence</span><input class="fi" type="text" placeholder="List or write NONE"></td>
       <td><span class="fl">Follow-up Required?</span>
-        <label><input type="checkbox" class="cb"> Yes — Assign to: <input class="fi" type="text" style="width:120px;display:inline-block;border-bottom:1px solid #888"></label>
+        <label><input type="checkbox" class="cb"> Yes — Assign to: <input class="fi" type="text" style="width:140px;display:inline-block;border-bottom:1px solid #888"></label>
       </td>
     </tr>
   </table>
-  <div style="display:flex;gap:8px;margin-top:6px">
-    <div class="sig-box" style="flex:1">Supervisor Review: <input type="text" style="border:none;border-bottom:1px solid #000;width:180px;font:inherit;font-size:11px;background:transparent"><div class="sig-lbl">Supervisor Signature / Badge</div></div>
-    <div class="sig-box" style="text-align:right"><div class="sig-name">CALLAHAN, RYAN</div><div style="font-size:10px;color:#444">3-ADAM-14</div><div class="sig-lbl">Reporting Officer · Badge</div></div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="sig-box" style="flex:1">Supervisor Review: <input type="text" style="border:none;border-bottom:1px solid #000;width:180px;font:inherit;font-size:12px;background:transparent"><div class="sig-lbl">Supervisor Signature / Badge</div></div>
+    <div class="sig-box" style="text-align:right"><div class="sig-name">CALLAHAN, RYAN</div><div style="font-size:11px;color:#444">3-ADAM-14</div><div class="sig-lbl">Reporting Officer · Badge</div></div>
   </div>
 </div>`;
 
@@ -1082,44 +1062,44 @@ const swHTML=`<div class="doc" id="f-search" class="f-doc" style="display:none">
   <table class="ft">
     <tr>
       <td colspan="2"><span class="fl">Affiant (Applying Officer)</span><input class="fi" type="text" value="CALLAHAN, RYAN" data-lock="1"></td>
-      <td><span class="fl">Unit / Badge</span><input class="fi" type="text" value="3-ADAM-14" data-lock="1"></td>
-      <td><span class="fl">Date of Application</span><input class="fi" type="text" id="f-search-date"></td>
-      <td><span class="fl">Time</span><input class="fi" type="text" id="f-search-time"></td>
+      <td style="width:22%"><span class="fl">Unit / Badge</span><input class="fi" type="text" value="3-ADAM-14" data-lock="1"></td>
+      <td style="width:20%"><span class="fl">Date of Application</span><input class="fi" type="text" id="f-search-date"></td>
+      <td style="width:14%"><span class="fl">Time</span><input class="fi" type="text" id="f-search-time"></td>
     </tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">PREMISES / PERSON / VEHICLE TO BE SEARCHED</div>
   <table class="ft">
     <tr>
       <td colspan="3"><span class="fl">Address / Description of Premises</span><input class="fi" type="text"></td>
-      <td><span class="fl">City</span><input class="fi" type="text"></td>
+      <td style="width:22%"><span class="fl">City</span><input class="fi" type="text"></td>
     </tr>
     <tr>
       <td><span class="fl">Subject Name (if applicable)</span><input class="fi" type="text"></td>
-      <td><span class="fl">DOB</span><input class="fi" type="text"></td>
-      <td><span class="fl">Vehicle Plate (if applicable)</span><input class="fi" type="text"></td>
+      <td style="width:18%"><span class="fl">DOB</span><input class="fi" type="text"></td>
+      <td style="width:22%"><span class="fl">Vehicle Plate (if applicable)</span><input class="fi" type="text"></td>
       <td><span class="fl">Vehicle Description</span><input class="fi" type="text"></td>
     </tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">ITEMS SOUGHT</div>
   <table class="ft">
-    <tr><td style="height:52px"><textarea class="fi" rows="3" style="width:100%;height:50px" placeholder="Describe items, contraband, or evidence to be seized..."></textarea></td></tr>
+    <tr><td style="height:68px"><textarea class="fi" rows="3" style="width:100%;height:66px" placeholder="Describe items, contraband, or evidence to be seized..."></textarea></td></tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">PROBABLE CAUSE STATEMENT</div>
   <table class="ft">
-    <tr><td style="height:120px"><textarea class="fi" rows="8" style="width:100%;height:118px" placeholder="State in detail the facts establishing probable cause for the issuance of this warrant..."></textarea></td></tr>
+    <tr><td style="height:134px"><textarea class="fi" rows="8" style="width:100%;height:132px" placeholder="State in detail the facts establishing probable cause for the issuance of this warrant..."></textarea></td></tr>
   </table>
   <table class="ft" style="margin-top:6px">
     <tr>
-      <td style="width:50%;background:#f8f8e8;font-size:10px;font-style:italic;padding:6px">I swear / affirm under penalty of perjury that the foregoing is true and correct to the best of my knowledge.</td>
+      <td style="width:50%;background:#f8f8e8;font-size:11px;font-style:italic;padding:8px">I swear / affirm under penalty of perjury that the foregoing is true and correct to the best of my knowledge.</td>
       <td>
         <span class="fl">Judge / Supervisor Approving</span><input class="fi" type="text">
-        <span class="fl" style="margin-top:4px">Warrant Issued (Date / Time)</span><input class="fi" type="text">
+        <span class="fl" style="margin-top:5px;display:block">Warrant Issued (Date / Time)</span><input class="fi" type="text">
       </td>
     </tr>
   </table>
-  <div style="display:flex;gap:8px;margin-top:6px">
-    <div class="sig-box" style="flex:1">Issuing Authority: <input type="text" style="border:none;border-bottom:1px solid #000;width:200px;font:inherit;font-size:11px;background:transparent"><div class="sig-lbl">Judge / Supervisor Signature</div></div>
-    <div class="sig-box" style="text-align:right"><div class="sig-name">CALLAHAN, RYAN</div><div style="font-size:10px;color:#444">3-ADAM-14</div><div class="sig-lbl">Affiant · Badge</div></div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="sig-box" style="flex:1">Issuing Authority: <input type="text" style="border:none;border-bottom:1px solid #000;width:200px;font:inherit;font-size:12px;background:transparent"><div class="sig-lbl">Judge / Supervisor Signature</div></div>
+    <div class="sig-box" style="text-align:right"><div class="sig-name">CALLAHAN, RYAN</div><div style="font-size:11px;color:#444">3-ADAM-14</div><div class="sig-lbl">Affiant · Badge</div></div>
   </div>
 </div>`;
 
@@ -1129,26 +1109,31 @@ const towHTML=`<div class="doc" id="f-tow" class="f-doc" style="display:none">
   <div class="sect-bar" style="margin-top:2px">VEHICLE INFORMATION</div>
   <table class="ft">
     <tr>
-      <td style="width:18%"><span class="fl">License Plate</span><input class="fi" type="text"></td>
-      <td style="width:8%"><span class="fl">State</span><input class="fi" type="text" value="SA"></td>
-      <td style="width:16%"><span class="fl">Make</span><input class="fi" type="text"></td>
-      <td style="width:18%"><span class="fl">Model</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Year</span><input class="fi" type="text"></td>
-      <td style="width:9%"><span class="fl">Color</span><input class="fi" type="text"></td>
-      <td><span class="fl">VIN</span><input class="fi" type="text"></td>
+      <td style="width:22%"><span class="fl">License Plate</span><input class="fi" type="text"></td>
+      <td style="width:10%"><span class="fl">State</span><input class="fi" type="text" value="SA"></td>
+      <td style="width:22%"><span class="fl">Make</span><input class="fi" type="text"></td>
+      <td><span class="fl">Model</span><input class="fi" type="text"></td>
     </tr>
     <tr>
-      <td colspan="3"><span class="fl">Registered Owner</span><input class="fi" type="text"></td>
-      <td colspan="2"><span class="fl">Owner Address</span><input class="fi" type="text"></td>
-      <td><span class="fl">Owner Phone</span><input class="fi" type="text"></td>
+      <td style="width:12%"><span class="fl">Year</span><input class="fi" type="text"></td>
+      <td style="width:14%"><span class="fl">Color</span><input class="fi" type="text"></td>
+      <td colspan="2"><span class="fl">VIN</span><input class="fi" type="text"></td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="fl">Registered Owner</span><input class="fi" type="text"></td>
+      <td><span class="fl">Owner Address</span><input class="fi" type="text"></td>
       <td><span class="fl">DL / ID #</span><input class="fi" type="text"></td>
+    </tr>
+    <tr>
+      <td><span class="fl">Owner Phone</span><input class="fi" type="text"></td>
+      <td colspan="3"></td>
     </tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">TOW DETAILS</div>
   <table class="ft">
     <tr>
-      <td style="width:18%"><span class="fl">Date of Tow</span><input class="fi" type="text" id="f-tow-date"></td>
-      <td style="width:12%"><span class="fl">Time</span><input class="fi" type="text" id="f-tow-time"></td>
+      <td style="width:20%"><span class="fl">Date of Tow</span><input class="fi" type="text" id="f-tow-date"></td>
+      <td style="width:14%"><span class="fl">Time</span><input class="fi" type="text" id="f-tow-time"></td>
       <td colspan="2"><span class="fl">Location Vehicle Towed From</span><input class="fi" type="text"></td>
     </tr>
     <tr>
@@ -1158,31 +1143,31 @@ const towHTML=`<div class="doc" id="f-tow" class="f-doc" style="display:none">
     </tr>
     <tr>
       <td colspan="4"><span class="fl">Reason for Tow</span>
-        <label><input type="checkbox" class="cb"> Abandoned</label>&nbsp;
-        <label><input type="checkbox" class="cb"> Evidence Hold</label>&nbsp;
-        <label><input type="checkbox" class="cb"> DUI / Arrest</label>&nbsp;
-        <label><input type="checkbox" class="cb"> Blocking</label>&nbsp;
-        <label><input type="checkbox" class="cb"> Stolen Recovery</label>&nbsp;
+        <label><input type="checkbox" class="cb"> Abandoned</label>&nbsp;&nbsp;
+        <label><input type="checkbox" class="cb"> Evidence Hold</label>&nbsp;&nbsp;
+        <label><input type="checkbox" class="cb"> DUI / Arrest</label>&nbsp;&nbsp;
+        <label><input type="checkbox" class="cb"> Blocking</label>&nbsp;&nbsp;
+        <label><input type="checkbox" class="cb"> Stolen Recovery</label>&nbsp;&nbsp;
         <label><input type="checkbox" class="cb"> Other: <input class="fi" type="text" style="width:100px;display:inline-block;border-bottom:1px solid #888"></label>
       </td>
     </tr>
   </table>
   <div class="sect-bar" style="margin-top:6px">PERSONAL PROPERTY INVENTORY</div>
   <table class="ft">
-    <tr><td style="height:56px"><textarea class="fi" rows="3" style="width:100%;height:54px" placeholder="List all personal property observed in/on vehicle, or write NONE..."></textarea></td></tr>
+    <tr><td style="height:72px"><textarea class="fi" rows="3" style="width:100%;height:70px" placeholder="List all personal property observed in/on vehicle, or write NONE..."></textarea></td></tr>
   </table>
   <table class="ft" style="margin-top:6px">
     <tr>
       <td style="width:50%"><span class="fl">Vehicle Condition Notes</span><input class="fi" type="text" placeholder="Pre-existing damage, etc."></td>
       <td><span class="fl">Owner Notified?</span>
-        <label><input type="checkbox" class="cb"> Yes</label>&nbsp;
-        <label><input type="checkbox" class="cb"> No — Reason: <input class="fi" type="text" style="width:100px;display:inline-block;border-bottom:1px solid #888"></label>
+        <label><input type="checkbox" class="cb"> Yes</label>&nbsp;&nbsp;
+        <label><input type="checkbox" class="cb"> No — Reason: <input class="fi" type="text" style="width:110px;display:inline-block;border-bottom:1px solid #888"></label>
       </td>
     </tr>
   </table>
-  <div style="display:flex;gap:8px;margin-top:6px">
-    <div class="sig-box" style="flex:1">Tow Driver: <input type="text" style="border:none;border-bottom:1px solid #000;width:180px;font:inherit;font-size:11px;background:transparent"><div class="sig-lbl">Tow Driver Signature</div></div>
-    <div class="sig-box" style="text-align:right"><div class="sig-name">CALLAHAN, RYAN</div><div style="font-size:10px;color:#444">3-ADAM-14</div><div class="sig-lbl">Authorizing Officer · Badge</div></div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="sig-box" style="flex:1">Tow Driver: <input type="text" style="border:none;border-bottom:1px solid #000;width:180px;font:inherit;font-size:12px;background:transparent"><div class="sig-lbl">Tow Driver Signature</div></div>
+    <div class="sig-box" style="text-align:right"><div class="sig-name">CALLAHAN, RYAN</div><div style="font-size:11px;color:#444">3-ADAM-14</div><div class="sig-lbl">Authorizing Officer · Badge</div></div>
   </div>
 </div>`;
 
