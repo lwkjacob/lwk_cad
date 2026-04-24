@@ -108,15 +108,36 @@ RegisterNUICallback('officerLogin', function(data, cb)
         cb({ ok = false })
         return
     end
+    local streetName = ''
+    local coords = GetEntityCoords(PlayerPedId())
+    local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+    if streetHash then streetName = GetStreetNameFromHashKey(streetHash) or '' end
     officerData = {
         name       = data.name,
         callsign   = data.callsign or '',
-        department = data.department or ''
+        department = data.department or '',
+        location   = streetName
     }
     isLoggedIn = true
     TriggerServerEvent('lwk_cad:setOfficerInfo', officerData)
     -- loginSuccess is handled by nui.js patch on doLogin(); no push needed here
     cb({ ok = true })
+end)
+
+-- ─── periodic location update ─────────────────────────────────────────────────
+
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(30000)
+        if isLoggedIn then
+            local coords = GetEntityCoords(PlayerPedId())
+            local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+            local streetName = streetHash and GetStreetNameFromHashKey(streetHash) or ''
+            if streetName ~= '' then
+                TriggerServerEvent('lwk_cad:updateUnitLocation', streetName)
+            end
+        end
+    end
 end)
 
 RegisterNUICallback('lookupPerson', function(data, cb)

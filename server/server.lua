@@ -373,14 +373,15 @@ AddEventHandler('ErsIntegration::OnToggleShift', function(arg1, arg2, arg3)
             local ok, err = pcall(function()
                 MySQL.query.await([[
                     INSERT INTO lwk_active_units
-                        (source_id, officer_name, callsign, department, service_type, status_code)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                        (source_id, officer_name, callsign, department, service_type, status_code, location)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
                         officer_name   = VALUES(officer_name),
                         callsign       = VALUES(callsign),
                         department     = VALUES(department),
                         service_type   = VALUES(service_type),
                         status_code    = VALUES(status_code),
+                        location       = VALUES(location),
                         on_shift_since = CURRENT_TIMESTAMP
                 ]], {
                     tonumber(playerSrc),
@@ -388,7 +389,8 @@ AddEventHandler('ErsIntegration::OnToggleShift', function(arg1, arg2, arg3)
                     info.callsign or ('UNIT-' .. tostring(playerSrc)),
                     info.department or safeStr(serviceType or 'police'),
                     safeStr(serviceType or 'police'),
-                    Config.DefaultStatusCode
+                    Config.DefaultStatusCode,
+                    info.location or ''
                 })
             end)
             if not ok then
@@ -418,12 +420,13 @@ AddEventHandler('lwk_cad:setOfficerInfo', function(data)
     ActiveOfficerInfo[source] = {
         name       = safeStr(data.name),
         callsign   = safeStr(data.callsign),
-        department = safeStr(data.department)
+        department = safeStr(data.department),
+        location   = safeStr(data.location or '')
     }
     -- update DB row if already on shift
     MySQL.query(
-        'UPDATE lwk_active_units SET officer_name = ?, callsign = ?, department = ? WHERE source_id = ?',
-        { safeStr(data.name), safeStr(data.callsign), safeStr(data.department), tonumber(source) }
+        'UPDATE lwk_active_units SET officer_name = ?, callsign = ?, department = ?, location = ? WHERE source_id = ?',
+        { safeStr(data.name), safeStr(data.callsign), safeStr(data.department), safeStr(data.location or ''), tonumber(source) }
     )
 end)
 
@@ -632,6 +635,16 @@ AddEventHandler('lwk_cad:updateUnitStatus', function(data, requestId)
         }
         TriggerClientEvent('lwk_cad:pushUnitUpdate', -1, unit)
     end)
+end)
+
+-- ─── background location update (client pushes every 30 s) ──────────────────
+
+RegisterNetEvent('lwk_cad:updateUnitLocation')
+AddEventHandler('lwk_cad:updateUnitLocation', function(streetName)
+    local src = source
+    local loc = safeStr(streetName)
+    MySQL.query('UPDATE lwk_active_units SET location = ? WHERE source_id = ?', { loc, tonumber(src) })
+    TriggerClientEvent('lwk_cad:pushUnitUpdate', -1, { source_id = tonumber(src), location = loc })
 end)
 
 -- ─── clear dispatch (officer clears own call; admin clears any) ───────────────
