@@ -94,13 +94,12 @@ local function upsertCivilian(pedData)
             MySQL.query.await([[
                 INSERT INTO lwk_civilians
                     (first_name, last_name, dob, gender, address, ped_model,
-                     wanted_level, has_warrant, warrant_reason, flags, priors, dl_number, dl_status, raw_data)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     has_warrant, warrant_reason, flags, priors, dl_number, dl_status, raw_data)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     dob            = VALUES(dob),
                     gender         = VALUES(gender),
                     address        = VALUES(address),
-                    wanted_level   = VALUES(wanted_level),
                     has_warrant    = VALUES(has_warrant),
                     warrant_reason = VALUES(warrant_reason),
                     flags          = VALUES(flags),
@@ -115,7 +114,6 @@ local function upsertCivilian(pedData)
                 safeStr(pedData.Gender),
                 address,
                 safeStr(pedData.entityModel),
-                0,
                 hasWarrant,
                 warrantReason,
                 json.encode(flags),
@@ -429,12 +427,35 @@ AddEventHandler('lwk_cad:setOfficerInfo', function(data)
     )
 end)
 
+RegisterNetEvent('lwk_cad:officerLogout')
+AddEventHandler('lwk_cad:officerLogout', function()
+    -- clears the MDT session; ERS shift state is unaffected
+    ActiveOfficerInfo[source] = nil
+end)
+
+RegisterNetEvent('lwk_cad:updateCallsign')
+AddEventHandler('lwk_cad:updateCallsign', function(data)
+    local src = source
+    if not data or not data.callsign or data.callsign == '' then return end
+    local newCs = string.upper(string.sub(tostring(data.callsign), 1, 20))
+    if ActiveOfficerInfo[src] then
+        ActiveOfficerInfo[src].callsign = newCs
+    end
+    MySQL.query('UPDATE lwk_active_units SET callsign = ? WHERE source_id = ?', { newCs, tonumber(src) })
+    CreateThread(function()
+        local rows = MySQL.query.await('SELECT * FROM lwk_active_units WHERE source_id = ? LIMIT 1', { tonumber(src) })
+        if rows and #rows > 0 then
+            TriggerClientEvent('lwk_cad:pushUnitUpdate', -1, rows[1])
+        end
+    end)
+end)
+
 AddEventHandler('playerDropped', function()
     local src = source
-    ActiveOfficerInfo[src]  = nil
-    ActiveCallouts[src]     = nil
-    ActivePullovers[src]    = nil
-    ActivePursuits[src]     = nil
+    ActiveOfficerInfo[src] = nil
+    ActiveCallouts[src]    = nil
+    ActivePullovers[src]   = nil
+    ActivePursuits[src]    = nil
     MySQL.query('DELETE FROM lwk_active_units WHERE source_id = ?', { tonumber(src) })
 end)
 
@@ -622,12 +643,8 @@ AddEventHandler('lwk_cad:clearDispatch', function(data)
 
     local isAdmin = IsPlayerAceAllowed(tostring(src), Config.AdminAce or 'group.admin')
     if not isAdmin then
-        -- allow only if the officer's callsign is in assigned_units
-        local rows = MySQL.query.await('SELECT assigned_units FROM lwk_dispatch WHERE event_number = ? LIMIT 1', { data.eventNumber })
-        if not rows or #rows == 0 then return end
-        local assigned = rows[1].assigned_units or ''
-        local callsign = getOfficerCallsign(src)
-        if callsign == '' or not assigned:find(callsign, 1, true) then return end
+        -- any officer who is MDT-logged-in can clear a call
+        if not ActiveOfficerInfo[src] then return end
     end
 
     updateDispatchStatus(data.eventNumber, 'COMPLETED', nil)
@@ -635,6 +652,28 @@ AddEventHandler('lwk_cad:clearDispatch', function(data)
     for s, ev in pairs(ActiveCallouts)  do if ev == data.eventNumber then ActiveCallouts[s]  = nil end end
     for s, ev in pairs(ActivePullovers) do if ev == data.eventNumber then ActivePullovers[s] = nil end end
     for s, ev in pairs(ActivePursuits)  do if ev == data.eventNumber then ActivePursuits[s]  = nil end end
+end)
+
+-- ─── assign self to dispatch call ────────────────────────────────────────────
+
+RegisterNetEvent('lwk_cad:assignToCall')
+AddEventHandler('lwk_cad:assignToCall', function(data)
+    local src = source
+    if not data or not data.eventNumber then return end
+    local callsign = getOfficerCallsign(src)
+    if callsign == '' then return end
+    CreateThread(function()
+        local rows = MySQL.query.await(
+            "SELECT assigned_units FROM lwk_dispatch WHERE event_number = ? AND status NOT IN ('CLOSED','COMPLETED') LIMIT 1",
+            { data.eventNumber }
+        )
+        if not rows or #rows == 0 then return end
+        local assigned = rows[1].assigned_units or ''
+        if assigned:find(callsign, 1, true) then return end
+        local newAssigned = assigned == '' and callsign or (assigned .. ', ' .. callsign)
+        MySQL.query.await('UPDATE lwk_dispatch SET assigned_units = ? WHERE event_number = ?', { newAssigned, data.eventNumber })
+        TriggerClientEvent('lwk_cad:pushDispatch', -1, { event_number = data.eventNumber, assigned_units = newAssigned })
+    end)
 end)
 
 -- ─── dispatch/unit cleanup loop ───────────────────────────────────────────────
@@ -663,7 +702,6 @@ CreateThread(function()
             `gender`         VARCHAR(16)  NOT NULL DEFAULT '',
             `address`        VARCHAR(128) NOT NULL DEFAULT '',
             `ped_model`      VARCHAR(64)  NOT NULL DEFAULT '',
-            `wanted_level`   INT          NOT NULL DEFAULT 0,
             `has_warrant`    TINYINT(1)   NOT NULL DEFAULT 0,
             `warrant_reason` VARCHAR(255) NOT NULL DEFAULT '',
             `flags`          TEXT,

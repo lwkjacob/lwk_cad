@@ -20,6 +20,9 @@ window.addEventListener('message', function(event) {
             if (msg.deptConfig) window.lwkDeptConfig = msg.deptConfig;
             if (msg.loadingDelayMin !== undefined) window.lwkDelayMin = msg.loadingDelayMin;
             if (msg.loadingDelayMax !== undefined) window.lwkDelayMax = msg.loadingDelayMax;
+            if (msg.streetName !== undefined) window.lwkStreetName = msg.streetName;
+            if (msg.cities)   window.lwkCities   = msg.cities;
+            if (msg.counties) window.lwkCounties = msg.counties;
             document.getElementById('lwk-laptop').style.display = 'flex';
             if (window.lwkOfficer) {
                 document.querySelector('.app').style.display = 'flex';
@@ -92,9 +95,12 @@ window.addEventListener('message', function(event) {
                 var st = document.getElementById('form-status');
                 if (st) {
                     st.className = 'form-status ok';
-                    st.textContent = '✓ Saved to database — ' + (document.getElementById('form-rpt') || {}).textContent;
+                    var _af=document.querySelector('.f-doc[style*="block"]');
+                    var _rn=(_af&&_af.querySelector('[id$="-rpt"]')||{}).textContent||'';
+                    st.textContent = '✓ Saved to database — ' + _rn;
                     setTimeout(function() { st.className = 'form-status'; st.textContent = ''; }, 4000);
                 }
+                if (typeof clearForm === 'function') clearForm();
             }
             break;
     }
@@ -1004,7 +1010,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('lwk-status-btn').addEventListener('click', function(e) {
             e.stopPropagation();
             var panel = document.getElementById('lwk-status-panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            var opening = panel.style.display === 'none';
+            panel.style.display = opening ? 'block' : 'none';
+            if (opening) {
+                fetch('https://lwk_cad/getLocation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                }).then(function(r){ return r.json(); }).then(function(res) {
+                    if (res && res.streetName) {
+                        var locInput = document.getElementById('lwk-status-location');
+                        if (locInput) locInput.value = res.streetName;
+                    }
+                }).catch(function(){});
+            }
         });
 
         document.getElementById('lwk-status-submit').addEventListener('click', function() {
@@ -1312,8 +1331,26 @@ document.addEventListener('DOMContentLoaded', function() {
             var activeDoc = document.querySelector('.f-doc[style*="block"]');
             if (!activeDoc) return;
 
+            // require Last Name + First Name when the form has those fields
+            var _lastEl = null, _firstEl = null;
+            activeDoc.querySelectorAll('.fl').forEach(function(fl) {
+                var t = fl.textContent.trim();
+                if (t === 'Last Name')  _lastEl  = fl.parentElement.querySelector('input.fi');
+                if (t === 'First Name') _firstEl = fl.parentElement.querySelector('input.fi');
+            });
+            if (_lastEl && _firstEl && (!_lastEl.value.trim() || !_firstEl.value.trim())) {
+                var _st = document.getElementById('form-status');
+                if (_st) {
+                    _st.className = 'form-status err';
+                    _st.textContent = 'Last Name and First Name are required before submitting.';
+                    setTimeout(function() { _st.className = 'form-status'; _st.textContent = ''; }, 3500);
+                }
+                return;
+            }
+
             // snapshot form values immediately before any delay
-            var rptNum    = (document.getElementById('form-rpt') || {}).textContent || '';
+            var _rptSrc   = activeDoc.querySelector('[id$="-rpt"]');
+            var rptNum    = _rptSrc ? _rptSrc.textContent : '';
             var activeBtn = document.querySelector('.fs-btn.active');
             var rptType   = activeBtn ? activeBtn.textContent.trim() : '';
             var officer   = window.lwkOfficer || {};

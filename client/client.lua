@@ -42,12 +42,21 @@ local function openMDT()
     end
     isOpen = true
     SetNuiFocus(true, true)
+    local streetName = ''
+    local coords = GetEntityCoords(PlayerPedId())
+    local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+    if streetHash then
+        streetName = GetStreetNameFromHashKey(streetHash) or ''
+    end
     SendNUIMessage({
         action           = 'open',
         officerData      = officerData,
         deptConfig       = Config.Departments,
         loadingDelayMin  = Config.LoadingDelayMin,
-        loadingDelayMax  = Config.LoadingDelayMax
+        loadingDelayMax  = Config.LoadingDelayMax,
+        streetName       = streetName,
+        cities           = Config.Cities   or {},
+        counties         = Config.Counties or {}
     })
 end
 
@@ -171,7 +180,38 @@ RegisterNUICallback('clearDispatch', function(data, cb)
     cb({})
 end)
 
+RegisterNUICallback('assignToCall', function(data, cb)
+    TriggerServerEvent('lwk_cad:assignToCall', data)
+    cb({})
+end)
+
 RegisterNUICallback('closeNUI', function(data, cb)
     cb({})
     closeMDT()
 end)
+
+RegisterNUICallback('officerLogout', function(data, cb)
+    officerData = nil
+    isLoggedIn  = false
+    TriggerServerEvent('lwk_cad:officerLogout')
+    cb({})
+end)
+
+RegisterNUICallback('getLocation', function(data, cb)
+    local streetName = ''
+    local coords = GetEntityCoords(PlayerPedId())
+    local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+    if streetHash then
+        streetName = GetStreetNameFromHashKey(streetHash) or ''
+    end
+    cb({ streetName = streetName })
+end)
+
+RegisterNUICallback('updateCallsign', function(data, cb)
+    if data and data.callsign and data.callsign ~= '' then
+        if officerData then officerData.callsign = data.callsign end
+        TriggerServerEvent('lwk_cad:updateCallsign', data)
+    end
+    cb({})
+end)
+

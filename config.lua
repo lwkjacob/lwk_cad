@@ -46,9 +46,6 @@ Config.MaxReportResults   = 100
 -- Default radio status code assigned when an officer goes on shift
 Config.DefaultStatusCode = '10-8'
 
--- ERS wanted level at or above which a civilian is auto-flagged has_warrant = 1
-Config.WantedLevelWarrantThreshold = 2
-
 -- ─── UI / Loading ─────────────────────────────────────────────────────────────
 
 -- Simulated loading delay range (milliseconds) for queries, login, and form submission.
@@ -56,6 +53,26 @@ Config.WantedLevelWarrantThreshold = 2
 -- Set both to 0 to disable entirely.
 Config.LoadingDelayMin = 500
 Config.LoadingDelayMax = 1000
+
+-- ─── Form Location Dropdowns ─────────────────────────────────────────────────
+
+-- City options shown in city dropdown on forms
+Config.Cities = {
+    'Manhattan',
+    'Brooklyn',
+    'Queens',
+    'The Bronx',
+    'Staten Island',
+}
+
+-- County options shown in county dropdown on forms (Traffic Citation)
+Config.Counties = {
+    'New York County',
+    'Kings County',
+    'Queens County',
+    'Bronx County',
+    'Richmond County',
+}
 
 -- ─── Departments ─────────────────────────────────────────────────────────────
 

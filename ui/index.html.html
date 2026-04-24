@@ -716,7 +716,7 @@ function stampNow(dateId,timeId){
 }
 
 /* ── generate report number ── */
-function genRpt(){return 'P/'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*90000)+10000);}
+function genRpt(){return String(Math.floor(100000000+Math.random()*900000000));}
 
 /* ── form selection ── */
 function selectForm(key,btn){
@@ -726,20 +726,59 @@ function selectForm(key,btn){
   document.getElementById('form-area').style.display='flex';
   const titles={warning:'Written Warning',citation:'Traffic Citation',arrest:'Arrest Report',incident:'Incident Report',search:'Search Warrant',tow:'Vehicle Tow Sheet'};
   document.getElementById('form-title').textContent=titles[key]||key;
-  document.getElementById('form-rpt').textContent=genRpt();
+  var _rptNum=genRpt();
+  var _rptEl=document.getElementById('f-'+key+'-rpt');
+  if(_rptEl)_rptEl.textContent=_rptNum;
+  var _panelRpt=document.getElementById('form-rpt');
+  if(_panelRpt)_panelRpt.textContent=_rptNum;
   document.getElementById('form-status').className='form-status';
   document.getElementById('form-status').textContent='';
   // show correct form, hide others
   document.querySelectorAll('.f-doc').forEach(f=>f.style.display='none');
   const el=document.getElementById('f-'+key);
-  if(el){el.style.display='block';stampNow('f-'+key+'-date','f-'+key+'-time');}
+  if(!el)return;
+  el.style.display='block';
+  stampNow('f-'+key+'-date','f-'+key+'-time');
+  // date issued
+  var _now=new Date();
+  var _todayStr=('0'+(_now.getMonth()+1)).slice(-2)+'/'+('0'+_now.getDate()).slice(-2)+'/'+_now.getFullYear();
+  var _issued=document.getElementById('f-'+key+'-issued');
+  if(_issued)_issued.textContent=_todayStr;
+  // populate city selects
+  var _cities=window.lwkCities||[];
+  el.querySelectorAll('select.city-sel').forEach(function(sel){
+    if(sel.dataset.populated)return;
+    sel.innerHTML='<option value="">— Select —</option>';
+    _cities.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+    sel.dataset.populated='1';
+  });
+  // populate county selects
+  var _counties=window.lwkCounties||[];
+  el.querySelectorAll('select.county-sel').forEach(function(sel){
+    if(sel.dataset.populated)return;
+    sel.innerHTML='<option value="">— Select —</option>';
+    _counties.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+    sel.dataset.populated='1';
+  });
+  // auto-fill location fields
+  var _street=window.lwkStreetName||'';
+  if(_street){
+    var _locLabels=['Location','Location of Violation','Location of Arrest','Location / Address','Location Vehicle Towed From'];
+    el.querySelectorAll('.fl').forEach(function(fl){
+      if(_locLabels.indexOf(fl.textContent.trim())!==-1){
+        var inp=fl.parentElement.querySelector('input.fi');
+        if(inp&&!inp.dataset.lock&&!inp.value)inp.value=_street;
+      }
+    });
+  }
 }
 
 /* ── save / submit ── */
 function saveForm(){
   const st=document.getElementById('form-status');
   st.className='form-status ok';
-  st.textContent='✓ Report saved — '+document.getElementById('form-rpt').textContent;
+  var _panelRptEl=document.getElementById('form-rpt');
+  st.textContent='✓ Report saved — '+(_panelRptEl?_panelRptEl.textContent:'');
   setTimeout(()=>{st.className='form-status';st.textContent='';},4000);
 }
 function clearForm(){
@@ -747,6 +786,7 @@ function clearForm(){
   if(!active)return;
   active.querySelectorAll('input[type=text],input[type=number],textarea').forEach(i=>{if(!i.dataset.lock)i.value='';});
   active.querySelectorAll('input[type=checkbox]').forEach(i=>i.checked=false);
+  active.querySelectorAll('select.city-sel,select.county-sel').forEach(s=>{s.selectedIndex=0;});
 }
 
 /* ── build forms tab panel and inject ── */
@@ -769,7 +809,7 @@ function docHdr(formName,rptIdSuffix){
     </div>
     <div class="doc-num">
       <div class="num-lbl">Form Number</div>
-      <div class="num-val" id="form-rpt">—</div>
+      <div class="num-val" id="${rptIdSuffix}-rpt">—</div>
       <div class="num-lbl" style="margin-top:5px">Date Issued</div>
       <div style="font-size:11px;font-weight:600" id="${rptIdSuffix}-issued">—</div>
     </div>
@@ -795,7 +835,7 @@ const warnHTML=`<div class="doc" id="f-warning" class="f-doc" style="display:non
     </tr>
     <tr>
       <td colspan="2"><span class="fl">Residential Address</span><input class="fi" type="text"></td>
-      <td><span class="fl">City</span><input class="fi" type="text"></td>
+      <td><span class="fl">City</span><select class="fi city-sel"></select></td>
       <td><span class="fl">Driver License #</span><input class="fi" type="text"></td>
     </tr>
     <tr>
@@ -844,7 +884,8 @@ const citHTML=`<div class="doc" id="f-citation" class="f-doc" style="display:non
     </tr>
     <tr>
       <td colspan="2"><span class="fl">Residential Address</span><input class="fi" type="text"></td>
-      <td colspan="2"><span class="fl">City / State / Postal</span><input class="fi" type="text"></td>
+      <td><span class="fl">City</span><select class="fi city-sel"></select></td>
+      <td><span class="fl">State / Postal</span><input class="fi" type="text"></td>
     </tr>
     <tr>
       <td style="width:14%"><span class="fl">Gender</span><input class="fi" type="text"></td>
@@ -874,6 +915,10 @@ const citHTML=`<div class="doc" id="f-citation" class="f-doc" style="display:non
       <td style="width:16%"><span class="fl">Date</span><input class="fi" type="text" id="f-citation-date"></td>
       <td style="width:12%"><span class="fl">Time</span><input class="fi" type="text" id="f-citation-time"></td>
       <td colspan="2"><span class="fl">Location of Violation</span><input class="fi" type="text"></td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="fl">City</span><select class="fi city-sel"></select></td>
+      <td colspan="2"><span class="fl">County</span><select class="fi county-sel"></select></td>
     </tr>
     <tr>
       <td style="width:28%"><span class="fl">Section</span><input class="fi" type="text"></td>
@@ -933,7 +978,7 @@ const arrstHTML=`<div class="doc" id="f-arrest" class="f-doc" style="display:non
     </tr>
     <tr>
       <td colspan="2"><span class="fl">Residential Address</span><input class="fi" type="text"></td>
-      <td><span class="fl">City</span><input class="fi" type="text"></td>
+      <td><span class="fl">City</span><select class="fi city-sel"></select></td>
       <td><span class="fl">Phone</span><input class="fi" type="text"></td>
     </tr>
     <tr>
@@ -1016,7 +1061,7 @@ const incHTML=`<div class="doc" id="f-incident" class="f-doc" style="display:non
     </tr>
     <tr>
       <td colspan="2"><span class="fl">Location / Address</span><input class="fi" type="text"></td>
-      <td><span class="fl">City</span><input class="fi" type="text"></td>
+      <td><span class="fl">City</span><select class="fi city-sel"></select></td>
       <td><span class="fl">Beat / Zone</span><input class="fi" type="text"></td>
     </tr>
     <tr>
@@ -1071,7 +1116,7 @@ const swHTML=`<div class="doc" id="f-search" class="f-doc" style="display:none">
   <table class="ft">
     <tr>
       <td colspan="3"><span class="fl">Address / Description of Premises</span><input class="fi" type="text"></td>
-      <td style="width:22%"><span class="fl">City</span><input class="fi" type="text"></td>
+      <td style="width:22%"><span class="fl">City</span><select class="fi city-sel"></select></td>
     </tr>
     <tr>
       <td><span class="fl">Subject Name (if applicable)</span><input class="fi" type="text"></td>
