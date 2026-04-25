@@ -25,5 +25,6 @@ files {
     'ui/index.html.html',
     'ui/nui.js',
     'ui/images/nypd_logo.png',
-    'ui/images/nysp_logo.png'
+    'ui/images/nysp_logo.png',
+    'ui/images/lcmap.png'
 }

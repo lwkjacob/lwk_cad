@@ -90,6 +90,14 @@ html,body{margin:0;padding:0;background:#285e8e;font-family:"Tahoma","Geneva","S
 .c-blue{color:var(--blue);font-weight:600}.c-green{color:var(--green);font-weight:600}
 .c-purple{color:var(--purple);font-weight:600}.c-dim{color:#777}
 
+/* ── live map ── */
+#map-viewport{flex:1;overflow:hidden;position:relative;cursor:grab;background:#1a1a2e;min-height:0}
+#map-canvas{position:absolute;transform-origin:0 0;top:0;left:0;will-change:transform}
+#map-markers{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.map-unit{position:absolute;transform:translate(-50%,-50%)}
+.map-dot{width:10px;height:10px;border-radius:50%;background:#3a7abf;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.7)}
+.map-label{position:absolute;bottom:13px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9);background:rgba(10,20,50,.72);padding:1px 5px;border-radius:3px;pointer-events:none}
+
 /* ── search bar ── */
 .search-bar{display:flex;gap:6px;padding:7px 8px;background:linear-gradient(#fafaf0,#f0ede0);border-bottom:1px solid #d6d3c0;align-items:flex-end;flex:none}
 .field{display:flex;flex-direction:column;gap:3px}
@@ -301,6 +309,7 @@ html,body{margin:0;padding:0;background:#285e8e;font-family:"Tahoma","Geneva","S
     <button class="tab-btn"         onclick="switchTab('units',this)">Active Units</button>
     <button class="tab-btn"         onclick="switchTab('dispatch',this)">Dispatch Feed</button>
     <button class="tab-btn"         onclick="switchTab('forms',this)">Forms</button>
+    <button class="tab-btn"         onclick="switchTab('map',this);initMap();setTimeout(mapFitToView,60)">Live Map</button>
   </div>
 
   <!-- Content -->
@@ -579,6 +588,25 @@ html,body{margin:0;padding:0;background:#285e8e;font-family:"Tahoma","Geneva","S
         </div>
       </div>
     </div><!-- /dispatch -->
+
+    <div id="tab-map" class="tab-panel" style="padding:0;gap:0">
+      <div class="panel" style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div class="panel-hdr">
+          <span class="ph-dot" style="background:#3a7abf"></span>
+          <span class="ph-title">Live Map</span>
+          <span style="flex:1"></span>
+          <button class="tool" onclick="mapZoom(1)">+</button>
+          <button class="tool" onclick="mapZoom(-1)">−</button>
+          <button class="tool" onclick="mapFitToView()">Fit</button>
+        </div>
+        <div id="map-viewport">
+          <div id="map-canvas">
+            <img src="images/lcmap.png" width="6144" height="6144" style="display:block;user-select:none;-webkit-user-drag:none">
+          </div>
+          <div id="map-markers"></div>
+        </div>
+      </div>
+    </div><!-- /map -->
 
   </div><!-- /content -->
 

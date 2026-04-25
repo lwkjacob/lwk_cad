@@ -55,8 +55,9 @@ local function openMDT()
         loadingDelayMin  = Config.LoadingDelayMin,
         loadingDelayMax  = Config.LoadingDelayMax,
         streetName       = streetName,
-        cities           = Config.Cities   or {},
-        counties         = Config.Counties or {}
+        cities           = Config.Cities        or {},
+        counties         = Config.Counties      or {},
+        mapBounds        = Config.MapCalibration  or {}
     })
 end
 
@@ -116,7 +117,9 @@ RegisterNUICallback('officerLogin', function(data, cb)
         name       = data.name,
         callsign   = data.callsign or '',
         department = data.department or '',
-        location   = streetName
+        location   = streetName,
+        coord_x    = coords.x,
+        coord_y    = coords.y
     }
     isLoggedIn = true
     TriggerServerEvent('lwk_cad:setOfficerInfo', officerData)
@@ -128,14 +131,16 @@ end)
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(30000)
+        Citizen.Wait(5000)
         if isLoggedIn then
             local coords = GetEntityCoords(PlayerPedId())
             local streetHash, _ = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
             local streetName = streetHash and GetStreetNameFromHashKey(streetHash) or ''
-            if streetName ~= '' then
-                TriggerServerEvent('lwk_cad:updateUnitLocation', streetName)
-            end
+            TriggerServerEvent('lwk_cad:updateUnitLocation', {
+                streetName = streetName,
+                x          = coords.x,
+                y          = coords.y
+            })
         end
     end
 end)
@@ -225,7 +230,7 @@ RegisterNUICallback('getLocation', function(data, cb)
     if streetHash then
         streetName = GetStreetNameFromHashKey(streetHash) or ''
     end
-    cb({ streetName = streetName })
+    cb({ streetName = streetName, x = coords.x, y = coords.y })
 end)
 
 RegisterNUICallback('updateCallsign', function(data, cb)

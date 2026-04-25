@@ -76,6 +76,19 @@ Config.Counties = {
 
 -- ─── Departments ─────────────────────────────────────────────────────────────
 
+-- ─── Live Map ────────────────────────────────────────────────────────────────
+
+-- Two-point calibration for the live map marker positions.
+-- Pick any two recognisable landmarks (far apart = more accurate).
+--   px, py  = pixel position on lcmap.png  (0,0 = top-left; measure in any image editor)
+--   wx, wy  = in-game /coords at that exact spot
+Config.MapCalibration = {
+    { px = 1180,    py = 1700,    wx = 3878.47, wy = -1522.55  },
+    { px = 4270, py = 4730, wx = 6533.78, wy = -4128.59 },
+}
+
+-- ─── Departments ─────────────────────────────────────────────────────────────
+
 -- Display info for each department shown in MDT form headers and the login screen.
 -- Keys must match the <option value="..."> in the login dropdown (ui/index.html.html).
 -- seal: path relative to ui/ — must also appear in fxmanifest.lua files{}.

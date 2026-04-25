@@ -373,8 +373,8 @@ AddEventHandler('ErsIntegration::OnToggleShift', function(arg1, arg2, arg3)
             local ok, err = pcall(function()
                 MySQL.query.await([[
                     INSERT INTO lwk_active_units
-                        (source_id, officer_name, callsign, department, service_type, status_code, location)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                        (source_id, officer_name, callsign, department, service_type, status_code, location, coord_x, coord_y)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
                         officer_name   = VALUES(officer_name),
                         callsign       = VALUES(callsign),
@@ -382,6 +382,8 @@ AddEventHandler('ErsIntegration::OnToggleShift', function(arg1, arg2, arg3)
                         service_type   = VALUES(service_type),
                         status_code    = VALUES(status_code),
                         location       = VALUES(location),
+                        coord_x        = VALUES(coord_x),
+                        coord_y        = VALUES(coord_y),
                         on_shift_since = CURRENT_TIMESTAMP
                 ]], {
                     tonumber(playerSrc),
@@ -390,7 +392,9 @@ AddEventHandler('ErsIntegration::OnToggleShift', function(arg1, arg2, arg3)
                     info.department or safeStr(serviceType or 'police'),
                     safeStr(serviceType or 'police'),
                     Config.DefaultStatusCode,
-                    info.location or ''
+                    info.location or '',
+                    info.coord_x or 0,
+                    info.coord_y or 0
                 })
             end)
             if not ok then
@@ -421,12 +425,14 @@ AddEventHandler('lwk_cad:setOfficerInfo', function(data)
         name       = safeStr(data.name),
         callsign   = safeStr(data.callsign),
         department = safeStr(data.department),
-        location   = safeStr(data.location or '')
+        location   = safeStr(data.location or ''),
+        coord_x    = tonumber(data.coord_x) or 0,
+        coord_y    = tonumber(data.coord_y) or 0
     }
     -- update DB row if already on shift
     MySQL.query(
-        'UPDATE lwk_active_units SET officer_name = ?, callsign = ?, department = ?, location = ? WHERE source_id = ?',
-        { safeStr(data.name), safeStr(data.callsign), safeStr(data.department), safeStr(data.location or ''), tonumber(source) }
+        'UPDATE lwk_active_units SET officer_name = ?, callsign = ?, department = ?, location = ?, coord_x = ?, coord_y = ? WHERE source_id = ?',
+        { safeStr(data.name), safeStr(data.callsign), safeStr(data.department), safeStr(data.location or ''), tonumber(data.coord_x) or 0, tonumber(data.coord_y) or 0, tonumber(source) }
     )
 end)
 
@@ -640,11 +646,14 @@ end)
 -- ─── background location update (client pushes every 30 s) ──────────────────
 
 RegisterNetEvent('lwk_cad:updateUnitLocation')
-AddEventHandler('lwk_cad:updateUnitLocation', function(streetName)
+AddEventHandler('lwk_cad:updateUnitLocation', function(data)
     local src = source
-    local loc = safeStr(streetName)
-    MySQL.query('UPDATE lwk_active_units SET location = ? WHERE source_id = ?', { loc, tonumber(src) })
-    TriggerClientEvent('lwk_cad:pushUnitUpdate', -1, { source_id = tonumber(src), location = loc })
+    local loc = safeStr(type(data) == 'table' and data.streetName or tostring(data or ''))
+    local cx  = tonumber(type(data) == 'table' and data.x or 0) or 0
+    local cy  = tonumber(type(data) == 'table' and data.y or 0) or 0
+    MySQL.query('UPDATE lwk_active_units SET location = ?, coord_x = ?, coord_y = ? WHERE source_id = ?',
+        { loc, cx, cy, tonumber(src) })
+    TriggerClientEvent('lwk_cad:pushUnitUpdate', -1, { source_id = tonumber(src), location = loc, coord_x = cx, coord_y = cy })
 end)
 
 -- ─── clear dispatch (officer clears own call; admin clears any) ───────────────
@@ -762,10 +771,19 @@ CreateThread(function()
             `status_code`    VARCHAR(16)  NOT NULL DEFAULT '10-8',
             `location`       VARCHAR(128) NOT NULL DEFAULT '',
             `assignment`     VARCHAR(255) NOT NULL DEFAULT '',
+            `coord_x`        FLOAT        NOT NULL DEFAULT 0,
+            `coord_y`        FLOAT        NOT NULL DEFAULT 0,
             `on_shift_since` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY `source_id` (`source_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ]])
+    -- add coord columns to existing tables (safe to run repeatedly)
+    pcall(function()
+        MySQL.query.await('ALTER TABLE `lwk_active_units` ADD COLUMN `coord_x` FLOAT NOT NULL DEFAULT 0')
+    end)
+    pcall(function()
+        MySQL.query.await('ALTER TABLE `lwk_active_units` ADD COLUMN `coord_y` FLOAT NOT NULL DEFAULT 0')
+    end)
 
     MySQL.query([[
         CREATE TABLE IF NOT EXISTS `lwk_dispatch` (

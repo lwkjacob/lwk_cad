@@ -21,8 +21,9 @@ window.addEventListener('message', function(event) {
             if (msg.loadingDelayMin !== undefined) window.lwkDelayMin = msg.loadingDelayMin;
             if (msg.loadingDelayMax !== undefined) window.lwkDelayMax = msg.loadingDelayMax;
             if (msg.streetName !== undefined) window.lwkStreetName = msg.streetName;
-            if (msg.cities)   window.lwkCities   = msg.cities;
-            if (msg.counties) window.lwkCounties = msg.counties;
+            if (msg.cities)    window.lwkCities    = msg.cities;
+            if (msg.counties)  window.lwkCounties  = msg.counties;
+            if (msg.mapBounds) window.lwkMapBounds = msg.mapBounds;
             document.getElementById('lwk-laptop').style.display = 'flex';
             if (window.lwkOfficer) {
                 document.querySelector('.app').style.display = 'flex';
@@ -409,6 +410,8 @@ function renderUnitsTable(data) {
 
     var countEl = document.querySelector('#tab-units .panel-hdr span[style*="color:#555"]');
     if (countEl) countEl.textContent = '(' + units.length + ' unit' + (units.length !== 1 ? 's' : '') + ' logged in)';
+
+    renderMapMarkers(units);
 }
 
 function applyUnitUpdate(unit) {
@@ -1585,3 +1588,109 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) {}
 
 });
+
+// ── Live Map ──────────────────────────────────────────────────────────────────
+
+var _mapScale = 0.15, _mapTx = 0, _mapTy = 0, _mapDrag = null;
+var _mapUnitsCache = [];
+var MAP_IMG = 6144;
+
+function _worldToPixel(wx, wy) {
+    var pts = window.lwkMapBounds;
+    if (!pts || !pts[0] || !pts[1]) return { x: 0, y: 0 };
+    var p1 = pts[0], p2 = pts[1];
+    var sx = (p2.px - p1.px) / (p2.wx - p1.wx);
+    var sy = (p2.py - p1.py) / (p2.wy - p1.wy);
+    return {
+        x: p1.px + (wx - p1.wx) * sx,
+        y: p1.py + (wy - p1.wy) * sy
+    };
+}
+
+function _mapApply() {
+    var c = document.getElementById('map-canvas');
+    if (c) c.style.transform = 'translate(' + _mapTx + 'px,' + _mapTy + 'px) scale(' + _mapScale + ')';
+}
+
+window.mapFitToView = function() {
+    var vp = document.getElementById('map-viewport');
+    if (!vp) return;
+    var w = vp.offsetWidth, h = vp.offsetHeight;
+    if (!w || !h) return;
+    _mapScale = Math.min(w, h) / MAP_IMG * 0.95;
+    _mapTx = (w - MAP_IMG * _mapScale) / 2;
+    _mapTy = (h - MAP_IMG * _mapScale) / 2;
+    _mapApply();
+    _renderMarkers();
+};
+
+window.mapZoom = function(dir) {
+    var vp = document.getElementById('map-viewport');
+    if (!vp) return;
+    var cx = vp.offsetWidth / 2, cy = vp.offsetHeight / 2;
+    var f = dir > 0 ? 1.3 : (1 / 1.3);
+    var ns = Math.min(2, Math.max(0.04, _mapScale * f));
+    _mapTx = cx - (cx - _mapTx) * (ns / _mapScale);
+    _mapTy = cy - (cy - _mapTy) * (ns / _mapScale);
+    _mapScale = ns;
+    _mapApply();
+    _renderMarkers();
+};
+
+window.initMap = function() {
+    var vp = document.getElementById('map-viewport');
+    if (!vp || vp.dataset.mapInit) return;
+    vp.dataset.mapInit = '1';
+
+    vp.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        var r = vp.getBoundingClientRect();
+        var mx = e.clientX - r.left, my = e.clientY - r.top;
+        var f = e.deltaY < 0 ? 1.15 : (1 / 1.15);
+        var ns = Math.min(2, Math.max(0.04, _mapScale * f));
+        _mapTx = mx - (mx - _mapTx) * (ns / _mapScale);
+        _mapTy = my - (my - _mapTy) * (ns / _mapScale);
+        _mapScale = ns;
+        _mapApply();
+        _renderMarkers();
+    }, { passive: false });
+
+    vp.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        _mapDrag = { sx: e.clientX, sy: e.clientY, tx: _mapTx, ty: _mapTy };
+        vp.style.cursor = 'grabbing';
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!_mapDrag) return;
+        _mapTx = _mapDrag.tx + (e.clientX - _mapDrag.sx);
+        _mapTy = _mapDrag.ty + (e.clientY - _mapDrag.sy);
+        _mapApply();
+        _renderMarkers();
+    });
+    document.addEventListener('mouseup', function() {
+        if (_mapDrag) { _mapDrag = null; vp.style.cursor = 'grab'; }
+    });
+};
+
+function _renderMarkers() {
+    var mk = document.getElementById('map-markers');
+    if (!mk) return;
+    var html = '';
+    _mapUnitsCache.forEach(function(u) {
+        var cx = parseFloat(u.coord_x), cy = parseFloat(u.coord_y);
+        if (!cx && !cy) return;
+        var p = _worldToPixel(cx, cy);
+        var sx = (p.x * _mapScale + _mapTx).toFixed(1);
+        var sy = (p.y * _mapScale + _mapTy).toFixed(1);
+        html += '<div class="map-unit" style="left:' + sx + 'px;top:' + sy + 'px">'
+            + '<div class="map-label">' + esc(u.callsign || u.officer_name || '?') + '</div>'
+            + '<div class="map-dot"></div>'
+            + '</div>';
+    });
+    mk.innerHTML = html;
+}
+
+function renderMapMarkers(units) {
+    _mapUnitsCache = units || [];
+    _renderMarkers();
+}
