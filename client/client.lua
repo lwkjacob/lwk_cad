@@ -5,6 +5,9 @@ local officerData = nil
 -- pending server requests keyed by requestId → { action = 'nuiAction' }
 local pendingRequests = {}
 
+-- lookup results pushed by lwk_dispatch; flushed into the MDT on next open
+local pendingDispatchLookups = { vehicle = nil, person = nil }
+
 -- ─── permission check ─────────────────────────────────────────────────────────
 
 local function canOpenMDT()
@@ -59,6 +62,21 @@ local function openMDT()
         counties         = Config.Counties      or {},
         mapBounds        = Config.MapCalibration  or {}
     })
+
+    -- Flush any dispatch-pushed lookups after the loading screen finishes
+    if pendingDispatchLookups.vehicle or pendingDispatchLookups.person then
+        Citizen.CreateThread(function()
+            Citizen.Wait(Config.LoadingDelayMin or 1000)
+            if pendingDispatchLookups.vehicle then
+                SendNUIMessage({ action = 'vehicleResult', data = pendingDispatchLookups.vehicle })
+                pendingDispatchLookups.vehicle = nil
+            end
+            if pendingDispatchLookups.person then
+                SendNUIMessage({ action = 'personResult', data = pendingDispatchLookups.person })
+                pendingDispatchLookups.person = nil
+            end
+        end)
+    end
 end
 
 local function closeMDT()
@@ -99,6 +117,24 @@ RegisterNetEvent('lwk_cad:pushUnitUpdate')
 AddEventHandler('lwk_cad:pushUnitUpdate', function(unitRow)
     if isOpen then
         SendNUIMessage({ action = 'unitUpdate', data = unitRow })
+    end
+end)
+
+-- Pushed by lwk_dispatch when Config.lwkcad = true — populates MDT lookup tabs automatically.
+-- Always stored so the result is waiting when the officer opens the MDT next.
+RegisterNetEvent('lwk_cad:pushVehicleLookup')
+AddEventHandler('lwk_cad:pushVehicleLookup', function(data)
+    pendingDispatchLookups.vehicle = data
+    if isOpen then
+        SendNUIMessage({ action = 'vehicleResult', data = data })
+    end
+end)
+
+RegisterNetEvent('lwk_cad:pushPersonLookup')
+AddEventHandler('lwk_cad:pushPersonLookup', function(data)
+    pendingDispatchLookups.person = data
+    if isOpen then
+        SendNUIMessage({ action = 'personResult', data = data })
     end
 end)
 
